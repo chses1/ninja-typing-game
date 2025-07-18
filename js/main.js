@@ -664,20 +664,5 @@ document.querySelectorAll('.vocab-cell').forEach((cell, idx) => {
   };
 });
 };
-
-// 修完 gameLoop 後，確保這裡有呼叫：
-// 登入後啟動遊戲
-window.addEventListener('DOMContentLoaded', () => {
-  // 顯示登入 overlay
-  document.getElementById('login-overlay').style.display = 'flex';
-  document.getElementById('login-btn').onclick = () => {
-    const pid = document.getElementById('player-id-input').value.trim();
-    if (!/^\d{5}$/.test(pid)) {
-      return alert('請輸入 5 位數字編號');
-    }
-    gameState.player.id = pid;
-    document.getElementById('login-overlay').style.display = 'none';
-    startGame();
-  };
-});
+;
 
