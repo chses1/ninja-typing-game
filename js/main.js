@@ -439,29 +439,29 @@ export function startGame() {
   renderUI(gameState);
   requestAnimationFrame(gameLoop);
   // 圖鑑樣式的成就網格
-document.getElementById('ach-btn').onclick = () => {
-  const unlocked = gameState.achievementsUnlocked || [];
-  const gridEl = document.getElementById('ach-grid');
-  gridEl.innerHTML = achievements.map(ach => {
-    const isUnlocked = unlocked.includes(ach.id);
-    return `
-      <div class="ach-item${isUnlocked ? '' : ' locked'}">
-        <img src="/img/${ach.trophy}-trophy.png" alt="${ach.trophy} 獎盃">
-        <div class="ach-name">${ach.name}</div>
-      </div>
-    `;
-  }).join('');
-  document.getElementById('ach-overlay').style.display = 'flex';
-     // 掛上每個成就格的點擊，彈出詳情
-   document.querySelectorAll('#ach-grid .ach-item').forEach((item, idx) => {
-     item.onclick = () => {
-       const ach = achievements[idx];
-       document.getElementById('ach-detail-title').textContent = ach.name;
-       document.getElementById('ach-detail-desc').textContent  = ach.desc;
-       document.getElementById('ach-detail-modal').style.display = 'flex';
-     };
-   });
-};
+  document.getElementById('ach-btn').onclick = () => {
+    const unlocked = gameState.achievementsUnlocked || [];
+    const gridEl = document.getElementById('ach-grid');
+    gridEl.innerHTML = achievements.map(ach => {
+      const isUnlocked = unlocked.includes(ach.id);
+      return `
+        <div class="ach-item${isUnlocked ? '' : ' locked'}">
+          <img src="img/${ach.trophy}-trophy.png" alt="${ach.trophy} 獎盃">
+          <div class="ach-name">${ach.name}</div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('ach-overlay').style.display = 'flex';
+    // 掛上每個成就格的點擊，彈出詳情
+    document.querySelectorAll('#ach-grid .ach-item').forEach((item, idx) => {
+      item.onclick = () => {
+        const ach = achievements[idx];
+        document.getElementById('ach-detail-title').textContent = ach.name;
+        document.getElementById('ach-detail-desc').textContent  = ach.desc;
+        document.getElementById('ach-detail-modal').style.display = 'flex';
+      };
+    });
+  };
 }
 
 // 關閉成就列表按鈕：隱藏成就列表並顯示暫停選單
