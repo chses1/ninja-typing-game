@@ -58,13 +58,13 @@ bossBg.src = '../img/background4.png';
 // 暫停／遊戲結束背景
 const pauseBg = new Image();
 pauseBg.src = '../img/background5.png';
-const playerImg0    = new Image(); playerImg0.src    = '../img/player0.png';   // 1–10 關
-const playerImgMid  = new Image(); playerImgMid.src  = '../img/player.png';     // 11–20 關
-const playerImg1    = new Image(); playerImg1.src    = '../img/player1.png';   // 21–30 關
-const enemyBossImg  = new Image(); enemyBossImg.src  = '../img/enemy.png';
-const targetImg     = new Image(); targetImg.src     = '../img/target.png';
-const shurikenImg   = new Image(); shurikenImg.src   = '../img/player-bullet.png';
-const kunaiImg      = new Image(); kunaiImg.src      = '../img/enemy-bullet.png';
+const playerImg0    = new Image(); playerImg0.src    = './img/player0.png';   // 1–10 關
+const playerImgMid  = new Image(); playerImgMid.src  = './img/player.png';     // 11–20 關
+const playerImg1    = new Image(); playerImg1.src    = './img/player1.png';   // 21–30 關
+const enemyBossImg  = new Image(); enemyBossImg.src  = './img/enemy.png';
+const targetImg     = new Image(); targetImg.src     = './img/target.png';
+const shurikenImg   = new Image(); shurikenImg.src   = './img/player-bullet.png';
+const kunaiImg      = new Image(); kunaiImg.src      = './img/enemy-bullet.png';
 
 window.addEventListener('resize', resize);
 resize();
