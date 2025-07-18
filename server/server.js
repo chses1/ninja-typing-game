@@ -4,6 +4,7 @@ console.log('🔍 MONGODB_URI=', process.env.MONGODB_URI);   // ← 確認 env �
 const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
+const path     = require('path');    // ← 加上這行，引入 path 模組
 
 const app = express();
 // 允許所有來源 (或只允許你的 GH Pages 網域)
