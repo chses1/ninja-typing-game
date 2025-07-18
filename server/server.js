@@ -1,6 +1,6 @@
 // server/server.js
 require('dotenv').config();
-console.log('🔍 MONGODB_URI=', process.env.MONGODB_URI);   // ← 確認 env 變數有載入
+console.log('🔍 MONGODB_URI=mongodb+srv://chses1:<db_password>@cluster0.cltpvmb.mongodb.net/', process.env.MONGODB_URI);   // ← 確認 env 變數有載入
 const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
