@@ -7,10 +7,15 @@ const cors     = require('cors');
 const path     = require('path');    // ← 加上這行，引入 path 模組
 
 const app = express();
+
 // 允許所有來源 (或只允許你的 GH Pages 網域)
 app.use(cors({
-  origin: ['https://chses1.github.io']  // 或 simply origin: '*'
+  origin: [
+    'https://chses1.github.io',
+    'https://ninja-typing-game.onrender.com'
+  ]
 }));
+
 app.use(express.json());
 // 將前端專案根目錄當作靜態資源服務
 app.use(express.static(path.join(__dirname, '..')));
