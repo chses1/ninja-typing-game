@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>英文忍者打字遊戲</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    html, body { width:100%; height:100%; margin:0; padding:0; }
+    /* Splash 改用 <img> */
+    #splash-screen {
+      position: fixed;
+      top:0; left:0;
+      width:100vw; height:100vh;
+      background-color:#000;
+      cursor:pointer;
+      z-index:4000;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #splash-image {
+      max-width:100%;
+      max-height:100%;
+      object-fit:contain;
+    }
+    /* 初始隱藏 */
+    #game-container, #login-overlay, #virtual-keyboard {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="splash-screen">
+    <img id="splash-image" src="./img/login.png" alt="登入畫面">
+  </div>
+
+<!-- Game Over 專用背景 -->
+<div id="gameover-bg"
+     style="
+       display: none;
+       position: fixed;
+       top: 0; left: 0;
+       width:100vw; height:100vh;
+       background: url('./img/background5.png') no-repeat center center;
+       background-size: cover;
+       z-index: 3000;
+     ">
+</div>
+
+  <!-- 原本的登入遮罩 -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <h2>請輸入玩家編號</h2>
+      <input
+  type="text"
+  id="player-id"
+  placeholder="例如：30101"
+  maxlength="5"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  lang="en"
+  autocapitalize="none"
+  autocorrect="off"
+  spellcheck="false"
+/>
+      <button id="login-btn">登入遊戲</button>
+      <p id="login-error" style="color: red; margin-top: 8px;"></p>
+    </div>
+  </div>
+
+  <!-- 遊戲容器 -->
+  <div id="game-container">
+    <canvas id="game-canvas" tabindex="0"></canvas>
+    <div id="ui">
+      <!-- 保留原有 UI 結構 -->
+      <div id="health-label">玩家血量</div>
+<div id="health-bar" style="position: relative;">
+  <div id="health-fill"></div>
+  <div id="icon-health-wrap"
+       style="position:absolute; top:0; left:100%; margin-left:8px; display:none; align-items:center;">
+    <img src="img/health.png" width="32" height="32" />
+    <span id="health-count" style="color:white; margin-left:4px;">0</span>
+  </div>
+</div>
+      <div id="practice-timer">
+  練習剩餘時間：30s
+  <div id="icon-decoy-wrap"
+       style="position:absolute; top:0; left:100%; margin-left:8px; display:none; align-items:center;">
+    <img src="img/dodge.png" width="32" height="32" />
+    <span id="decoy-count" style="color:white; margin-left:4px;">0</span>
+  </div>
+</div>
+      <div id="score-center">分數：0</div>
+      <div id="combo-display"></div>
+      <div id="level-info">第 1 關：SAD（難過）</div>
+      <div id="instructions">
+        30秒練習擊落標靶可累積分數，擊落頭目手裡劍反擊弱點，擊退頭目可進入下一關。
+      </div>
+    </div>
+
+  <!-- 關卡過關 Overlay -->
+  <div id="level-overlay" style="display:none;">
+  <div class="overlay-box">
+    <div id="level-text" class="overlay-title"></div>
+    <button id="level-btn" class="overlay-btn" style="margin-bottom:16px;">下一關</button>
+    <button id="ach-btn" class="overlay-btn" style="margin-bottom:8px;">🏆 成就紀錄</button>
+    <button id="vocab-btn" class="overlay-btn">📖 詞彙圖鑑</button>
+  </div>
+</div>
+
+  <!-- 暫停選單 Overlay -->
+  <div id="pause-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.83);z-index:3500;align-items:center;justify-content:center;">
+    <div style="background:#222;padding:40px 32px 24px 32px;border-radius:24px;min-width:220px;max-width:90vw;text-align:center;">
+      <div style="font-size:2em;color:#ffea00;margin-bottom:24px;">遊戲暫停</div>
+      <button id="pause-vocab-btn" class="pause-btn" style="margin:12px 0;width:80%;font-size:1.2em;">📖 詞彙圖鑑</button><br>
+      <button id="pause-ach-btn" class="pause-btn" style="margin:12px 0;width:80%;font-size:1.2em;">🏆 成就紀錄</button><br>
+      <button id="pause-resume-btn" class="pause-btn" style="margin:22px 0 0 0;width:80%;font-size:1.2em;background:#ffea00;color:#222;">繼續遊戲</button>
+
+    </div>
+  </div>
+
+  <!-- 詞彙圖鑑 Overlay -->
+  <div id="vocab-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:3000;justify-content:center;align-items:center;color:white;">
+    <div style="max-width:900px;background:#222;padding:30px;border-radius:16px;max-height:80vh;overflow:auto;">
+      <h2 style="text-align:center;">詞彙圖鑑</h2>
+      <ul id="vocab-ul" style="list-style:none;padding:0;"></ul>
+      <button id="vocab-overlay-close-btn">關閉</button>
+    </div>
+  </div>
+
+    <!-- 虛擬鍵盤 (三排配置) -->
+  <div id="virtual-keyboard">
+    <div class="vk-row">
+      <button class="vk-key" data-key="Q">Q</button>
+      <button class="vk-key" data-key="W">W</button>
+      <button class="vk-key" data-key="E">E</button>
+      <button class="vk-key" data-key="R">R</button>
+      <button class="vk-key" data-key="T">T</button>
+      <button class="vk-key" data-key="Y">Y</button>
+      <button class="vk-key" data-key="U">U</button>
+      <button class="vk-key" data-key="I">I</button>
+      <button class="vk-key" data-key="O">O</button>
+      <button class="vk-key" data-key="P">P</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key" data-key="A">A</button>
+      <button class="vk-key" data-key="S">S</button>
+      <button class="vk-key" data-key="D">D</button>
+      <button class="vk-key" data-key="F">F</button>
+      <button class="vk-key" data-key="G">G</button>
+      <button class="vk-key" data-key="H">H</button>
+      <button class="vk-key" data-key="J">J</button>
+      <button class="vk-key" data-key="K">K</button>
+      <button class="vk-key" data-key="L">L</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key" data-key="Z">Z</button>
+      <button class="vk-key" data-key="X">X</button>
+      <button class="vk-key" data-key="C">C</button>
+      <button class="vk-key" data-key="V">V</button>
+      <button class="vk-key" data-key="B">B</button>
+      <button class="vk-key" data-key="N">N</button>
+      <button class="vk-key" data-key="M">M</button>
+      <button class="vk-key pause" data-key="Pause">暫停</button>
+      <button class="vk-key end" data-key="End">結束</button>
+    </div>
+  </div>
+
+  <!-- 放在 </body> 前 -->
+<div id="ach-overlay" class="overlay">
+  <div class="overlay-content">
+    <button id="ach-close" class="close-btn">&times;</button>
+    <h2>成就列表</h2>
+    <div id="ach-grid" class="grid"></div>
+  </div>
+</div>
+
+  <!-- 成就詳情彈窗 -->
+  <div id="ach-detail-modal" class="overlay">
+    <div class="overlay-content">
+      <button id="ach-detail-close" class="close-btn">&times;</button>
+      <h2 id="ach-detail-title"></h2>
+      <p id="ach-detail-desc" style="margin-top:12px; line-height:1.4;"></p>
+    </div>
+  </div>
+
+<script type="module">
+    import { startGame } from './js/main.js';
+
+    const splash     = document.getElementById('splash-screen');
+    const loginOv    = document.getElementById('login-overlay');
+    const gameCont   = document.getElementById('game-container');
+    const vkBoard    = document.getElementById('virtual-keyboard');
+    const loginBtn   = document.getElementById('login-btn');
+    const playerIdEl = document.getElementById('player-id');
+    const errorEl    = document.getElementById('login-error');
+
+    // 1. 點擊 Splash → 顯示登入視窗
+    splash.addEventListener('click', () => {
+      splash.style.display   = 'none';
+      loginOv.style.display  = 'flex';
+    });
+  // 即時過濾：只留數字並且最多 5 位
+  playerIdEl.addEventListener('input', () => {
+    let v = playerIdEl.value.replace(/\D/g, '').slice(0, 5);
+    if (playerIdEl.value !== v) playerIdEl.value = v;
+  });
+
+  loginBtn.addEventListener('click', () => {
+    const id = playerIdEl.value.trim();
+    // 僅接受 **正好** 5 位數字
+    if (!/^\d{5}$/.test(id)) {
+      errorEl.textContent = '請輸入 **正好 5 位** 數字編號';
+      return;
+    }
+
+    // 1. 設定玩家編號
+    window.gameState.player.id = id;
+
+    // 2. 清空上一位玩家的詞彙圖鑑與成就
+    localStorage.setItem('unlockedWords', JSON.stringify([]));
+    localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
+    window.gameState.unlockedWords       = [];
+    window.gameState.achievementsUnlocked = [];
+
+    // 3. 隱藏登入、顯示遊戲
+    loginOv.style.display  = 'none';
+    gameCont.style.display = 'block';
+    vkBoard.style.display  = 'flex';
+
+    // 讓 canvas 正確調整尺寸
+    window.dispatchEvent(new Event('resize'));
+
+    // 4. 啟動遊戲
+    startGame();
+  });
+</script>
+
+<!-- 排行榜 Overlay -->
+<div id="leaderboard-overlay"
+     style="display:none;
+            position:fixed;top:0;left:0;
+            width:100vw;height:100vh;
+            background:rgba(0,0,0,0.85);
+            z-index:3600;
+            justify-content:center;align-items:center;">
+  <div style="background:#222;padding:30px;border-radius:16px;max-height:80vh;overflow:auto;color:#fff;">
+    <h2 style="text-align:center;margin-bottom:16px;">排行榜</h2>
+    <table style="width:100%;border-collapse:collapse;">
+            <thead>
+        <tr>
+          <th style="padding:8px;border-bottom:1px solid #555;">排名</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">玩家編號</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">最高關卡</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">最高分數</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">圖鑑數量</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">銅/銀/金數</th>
+          <th style="padding:8px;border-bottom:1px solid #555;">總分</th>
+        </tr>
+      </thead>
+
+      <tbody id="leaderboard-table-body">
+        <!-- JS 動態插入 -->
+      </tbody>
+    </table>
+    <button id="leaderboard-close"
+            style="margin-top:16px;padding:8px 16px;
+                   background:#ffea00;color:#222;
+                   border:none;border-radius:4px;
+                   font-size:1em;display:block;margin:12px auto 0 auto;">
+      關閉
+    </button>
+  </div>
+</div>
+
+  <!-- 自訂成就解鎖通知 Overlay -->
+  <div id="ach-notify-overlay">
+    <div id="ach-notify-box">
+      <div id="ach-notify-text"></div>
+      <button id="ach-notify-btn">確定</button>
+    </div>
+  </div>
+
+<script>
+  // 等到 DOMContentLoaded 才註冊偵聽
+  document.addEventListener('DOMContentLoaded', () => {
+    // 監聽全域鍵盤事件
+    window.addEventListener('keydown', (e) => {
+      // 條件：當目前顯示登入遮罩 (#login-overlay) 時，且按下 Ctrl + A
+      const loginOv = document.getElementById('login-overlay');
+      if (loginOv && loginOv.style.display !== 'none') {
+        // 檢查 Ctrl + key 為 'A' 或 'a'
+        if (e.ctrlKey && e.key.toUpperCase() === 'A') {
+          e.preventDefault();
+          const pw = prompt('請輸入後台管理密碼');
+          if (pw !== '1070') {
+          alert('密碼錯誤');
+        return;
+        }
+        // 跳轉到 admin.html
+          window.location.href = './admin.html';
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

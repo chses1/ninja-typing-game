@@ -1,0 +1,547 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 登入遮罩 ───────────────────────────────── */
+#login-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;  /* 最高，蓋過所有 */
+}
+.login-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 280px;
+}
+.login-box input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  font-size: 16px;
+}
+.login-box button {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  background: #3498db;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.login-box #login-error {
+  color: red;
+  font-size: 14px;
+  height: 18px;
+}
+
+/* 全域盒模型 ───────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 整體版面、畫布 ───────────────────────────── */
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: url('../img/background.png') no-repeat center/cover;
+}
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;  /* 最底層 */
+}
+
+/* 遊戲 UI（左上方狀態列）──────────────────────── */
+#ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 110;
+    color: white;
+    font-family: sans-serif;
+    pointer-events: none;
+}
+#health-bar {
+  position: relative;
+  top: 12px;
+  left: 180px;   /* 往右再多移動 60px，與文字間隔更大 */
+  width: 200px;
+  height: 28px;
+  background: #333;
+  border: 2px solid #fff;
+}
+#health-label {
+  position: absolute;
+  top: 8px;      /* 與血條同 top 值 */
+  left: 10px;     /* 緊貼左側 */
+  font-size: 28px;
+  color: white;
+  z-index: 115;
+  pointer-events: none;
+}
+#health-fill {
+  width: 100%;
+  height: 100%;
+  background: red;
+}
+
+/* 虛擬鍵盤 ─────────────────────────────────── */
+#virtual-keyboard {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  height: 33.333vh;           /* 高度佔螢幕 1/3 */
+  background: #2f2f2f;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
+  z-index: 100;               /* 在 Canvas 上，但在 UI 之下 */
+  user-select: none;
+
+  display: flex;
+  flex-direction: column;
+  padding: 0.2vh 0;
+}
+.vk-row {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.1vh 0;
+}
+.vk-key {
+  flex: 1.5;
+  margin: 0.1vh;
+  background: #555;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 8vh;             /* 動態字體大小 */
+  line-height: 1;
+}
+.vk-key.shift,
+.vk-key.backspace {
+  flex: 1.5;
+}
+.vk-key:active {
+  background: #777;
+}
+
+/* 關卡過關 Overlay */
+#level-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.overlay-box {
+  text-align: center;
+}
+#level-btn {
+  background: #f39c12;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* style.css */
+#level-overlay .overlay-box .overlay-btn {
+  width: 90%;
+  max-width: 260px;
+  margin: 0 auto 8px auto;
+  display: block;
+}
+#level-overlay .overlay-box .overlay-btn:last-child {
+  margin-bottom: 0;
+}
+
+
+
+/* 血條下方倒數計時 */
+#practice-timer {
+  position: absolute;
+  top: 50px;
+  left: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #ff4444;  /* 亮紅 */
+  z-index: 110;
+  pointer-events: none;
+}
+
+/* 中上分數顯示 */
+#score-center {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  color: white;
+  z-index: 110;
+  pointer-events: none;
+}
+
+/* 關卡與單字解釋 (分數下方中央) */
+#level-info {
+  position: absolute;
+  top: 50px;                  /* 距離上方 50px，可再微調 */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  color: #ffea00;  /* 顯眼黃 */
+  z-index: 110;
+  pointer-events: none;
+}
+
+/* 右上遊戲說明 */
+#instructions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25%;
+  font-size: 28px;
+  line-height: 1.4;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.5);  /* 半透明黑色背景 */
+  padding: 10px;                   /* 內側留白 */
+  z-index: 110;
+  pointer-events: none;
+  max-height: calc(1.4em * 3); /* 三行高度 */
+  overflow: hidden;
+}
+
+.vocab-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.vocab-col {
+  display: flex;
+  flex-direction: row;
+}
+.vocab-cell {
+  width: 64px;
+  height: 90px;
+  margin: 0 8px;
+  background: #181818;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 2px solid #333;
+  box-sizing: border-box;
+  position: relative;
+}
+.vocab-cell:hover {
+  box-shadow: 0 0 0 2px #ffea0099;
+  border: 2px solid #ffea00;
+}
+.vocab-img {
+  width: 46px;
+  height: 46px;
+  margin: 6px 0 2px 0;
+  border-radius: 8px;
+  background: #fff;
+  object-fit: contain;
+  box-shadow: 0 1px 2px #0008;
+}
+.vocab-word {
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+  color: #ffea00;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+.vocab-blank {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: #555;
+  margin: 6px 0 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  color: #888;
+}
+
+#vocab-ul {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  width: 100%;
+  padding-bottom: 10px;
+}
+.vocab-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  min-width: 650px;  /* 保證單列夠寬讓三排都能顯示 */
+}
+
+#vocab-detail-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.75);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.vocab-detail-box {
+  background: #23232b;
+  border-radius: 22px;
+  padding: 36px 32px 24px 32px;
+  min-width: 260px;
+  max-width: 340px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 6px 32px #000b;
+  position: relative;
+}
+.vocab-detail-close {
+  margin-top: 18px;
+  padding: 8px 38px;
+  background: #ffea00;
+  color: #222;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.2em;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 2px;
+  box-shadow: 0 2px 8px #0003;
+}
+.vocab-detail-close:hover {
+  background: #ffd700;
+}
+
+#pause-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.83);
+  z-index: 3500;
+  align-items: center;
+  justify-content: center;
+}
+.pause-btn {
+  display: block;
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: none;
+  background: #333;
+  color: #ffea00;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 0 auto 10px auto;
+  box-shadow: 0 2px 10px #0007;
+  transition: background 0.18s, color 0.18s;
+}
+.pause-btn:hover {
+  background: #ffea00;
+  color: #232323;
+}
+
+#level-text, .overlay-title {
+  font-size: 2em;
+  color: #fff;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 8px #000, 0 0 12px #ffe082;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* Overlay */
+.overlay {
+  display: none;
+  position: fixed; top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+.overlay-content {
+  background: #222;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  color: #fff;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #fff;
+  float: right;
+  cursor: pointer;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+.ach-item {
+  text-align: center;
+}
+.ach-item img {
+  width: 48px;
+  height: 48px;
+  display: block;
+  margin: 0 auto 6px auto;
+}
+.ach-item.locked img {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.ach-item .ach-name {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+/* 讓成就圖鑑顯示在最上層 */
+#ach-overlay {
+  z-index: 3000;
+}
+
+/* 確保成就詳情彈窗顯示在成就列表之上 */
+#ach-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 4000;
+}
+
+/* Combo 動畫 */
+#combo-display {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 48px;
+  color: #ff4444;
+  text-shadow: 0 0 8px #ff8888;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 120;
+}
+
+@keyframes combo-pop {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0;
+  }
+}
+
+.combo-animation {
+  animation: combo-pop 0.8s ease-out forwards;
+}
+
+/* --------- 成就通知 Overlay --------- */
+#ach-notify-overlay {
+  display: none;                /* 預設隱藏 */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+}
+#ach-notify-box {
+  background: #333;
+  padding: 20px 30px;
+  border-radius: 8px;
+  color: #fff;
+  text-align: center;
+  max-width: 80%;
+  white-space: pre-wrap;        /* 保留換行 */
+}
+#ach-notify-text {
+  font-size: 1.3em;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+#ach-notify-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #ffea00;
+  color: #222;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+#icon-health-wrap {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 8px;
+  display: none;
+  align-items: center;
+  height: 100%;
+}
+
+#icon-decoy-wrap {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 8px;
+  display: none;
+  align-items: center;
+  height: 100%;
+}

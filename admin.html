@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>排行榜後台管理</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .controls input[type="text"] {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+    }
+    .controls button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .controls button#search-btn {
+      background: #3498db;
+      color: white;
+    }
+    .controls button#clear-btn {
+      background: #e74c3c;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table th, table td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    table th {
+      background: #eee;
+    }
+    #message {
+      margin-top: 12px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>排行榜後台管理</h1>
+    <div class="controls">
+      <!-- 班級搜尋欄：輸入前 N 碼，點「搜尋」 -->
+      <div>
+        <input type="text" id="class-input" placeholder="輸入班級編號 (例如：301)" />
+        <button id="search-btn">搜尋</button>
+      </div>
+      <!-- 清除所有成績按鈕 -->
+      <button id="clear-btn">清除所有成績</button>
+    </div>
+
+    <!-- 資料表 -->
+    <table>
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>玩家編號</th>
+          <th>最高關卡</th>
+          <th>最高分數</th>
+          <th>圖鑑數量</th>
+          <th>銅/銀/金</th>
+          <th>總分</th>
+          <th>最後更新</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <!-- JavaScript 會動態插入 -->
+      </tbody>
+    </table>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000'; // 若你部署在 Render 或其他域名，請改成對應網址
+
+    // 1. 取得並顯示所有排行榜資料
+    async function fetchAndRender(entries) {
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
+      // 先把 entries 原始陣列照 totalScore 排序
+      entries.sort((a, b) => b.totalScore - a.totalScore);
+      entries.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${item.playerId}</td>
+          <td>${item.highestLevel}</td>
+          <td>${item.highestScore}</td>
+          <td>${item.vocabCount}</td>
+          <td>${item.bronzeCount}/${item.silverCount}/${item.goldCount}</td>
+          <td>${item.totalScore}</td>
+          <td>${new Date(item.updatedAt).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 2. 從後端取得所有資料
+    async function loadAll() {
+      try {
+        const res = await fetch(`${API_BASE}/leaderboard`);
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error('載入排行榜失敗', err);
+        return [];
+      }
+    }
+
+    // 3. 初始化：一開始載入並 render
+    document.addEventListener('DOMContentLoaded', async () => {
+      const allData = await loadAll();
+      window.LBData = allData; // 暫存在全域，方便後續搜尋使用
+      fetchAndRender(allData);
+    });
+
+    // 4. 「搜尋」功能：根據班級編號（playerId 前綴）過濾
+    document.getElementById('search-btn').addEventListener('click', () => {
+      const cls = document.getElementById('class-input').value.trim();
+      if (!cls) {
+        // 空的話顯示全部
+        fetchAndRender(window.LBData);
+        return;
+      }
+      // 過濾：只顯示 playerId 以 cls 開頭者
+      const filtered = window.LBData.filter(item => item.playerId.startsWith(cls));
+      fetchAndRender(filtered);
+    });
+
+    // 5. 「清除所有成績」功能
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (!confirm('確定要清除所有排行榜成績嗎？此操作不可復原！')) return;
+      try {
+        const res = await fetch(`${API_BASE}/leaderboard`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          document.getElementById('message').textContent = '✅ 已成功清除所有成績';
+          // 清空列表
+          window.LBData = [];
+          fetchAndRender([]);
+        } else {
+          alert('❌ 清除失敗，請稍後再試');
+        }
+      } catch (err) {
+        console.error('清除失敗', err);
+        alert('❌ 網路或伺服器錯誤，無法清除');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "leaderboard": [
+    {
+      "playerId": "TEST001",
+      "highestLevel": 3,
+      "highestScore": 1500,
+      "vocabCount": 12,
+      "trophyCount": 1,
+      "id": "eca6"
+    },
+    {
+      "id": "b9f8",
+      "playerId": "30230",
+      "highestLevel": 2,
+      "highestScore": 10,
+      "vocabCount": 1,
+      "trophyCount": 2
+    },
+    {
+      "id": "07c2",
+      "playerId": "30130",
+      "highestLevel": 2,
+      "highestScore": 240,
+      "vocabCount": 1,
+      "trophyCount": 3
+    },
+    {
+      "id": "692a",
+      "playerId": "30130",
+      "highestLevel": 2,
+      "highestScore": 200,
+      "vocabCount": 1,
+      "trophyCount": 2
+    }
+  ]
+}
