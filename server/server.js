@@ -6,7 +6,10 @@ const mongoose = require('mongoose');
 const cors     = require('cors');
 
 const app = express();
-app.use(cors());
+// 允許所有來源 (或只允許你的 GH Pages 網域)
+app.use(cors({
+  origin: ['https://chses1.github.io']  // 或 simply origin: '*'
+}));
 app.use(express.json());
 
 // 連接 MongoDB Cloud

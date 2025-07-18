@@ -1,5 +1,5 @@
 // js/leaderboard.js
-const API_BASE = 'http://localhost:3000'; // ← 改成你的域名
+const API_BASE = 'https://ninja-typing-game.onrender.com'; // ← 改成你的域名
 /** 取得排行榜（顯示在 UI 上） */
 export async function updateLeaderboard() {
   try {
