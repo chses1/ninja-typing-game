@@ -201,46 +201,53 @@ function gameLoop() {
     return;
   }
   if (gameState.health <= 0 && !gameState.gameOver) {
-  // 標記已進入遊戲結束，避免重複觸發
-  gameState.gameOver = true;
+    // 標記已進入遊戲結束，避免重複觸發
+    gameState.gameOver = true;
 
-  // 一、先顯示全螢幕背景
-  gameoverBg.style.display = 'block';
-  // 二、隱藏鍵盤（和其他暫時不需要的 UI）
-  keyboardEl.style.display = 'none';
+    // 一、先顯示全螢幕背景
+    gameoverBg.style.display = 'block';
+    // 二、隱藏鍵盤（和其他暫時不需要的 UI）
+    keyboardEl.style.display = 'none';
 
-  // 這裡把成就解鎖清單傳進 countTrophies，算出銅／銀／金的數量
-  const { bronzeCount, silverCount, goldCount } = countTrophies(gameState.achievementsUnlocked);
-  // 圖鑑數就是 unlockedWords.length
-  const vocabCount = gameState.unlockedWords.length;
-  // 總成就數也可傳 trophyCount（供後端做取最大值判斷）
-  const trophyCount = gameState.achievementsUnlocked.length;
+    // 這裡把成就解鎖清單傳進 countTrophies，算出銅／銀／金的數量
+    const { bronzeCount, silverCount, goldCount } = countTrophies(gameState.achievementsUnlocked);
+    // 圖鑑數就是 unlockedWords.length
+    const vocabCount = gameState.unlockedWords.length;
+    // 總成就數也可傳 trophyCount（供後端做取最大值判斷）
+    const trophyCount = gameState.achievementsUnlocked.length;
 
-   // 1. 上傳完整成績
-  submitScore(
-    gameState.player.id,
-    gameState.currentLevel,
-    gameState.score,
-    vocabCount,
-    trophyCount,
-    bronzeCount,
-    silverCount,
-    goldCount
-  )
-    .then(() => {
-      // 2. 呼叫排行榜 API，並顯示排行榜 Overlay
+    // 新增登入檢查與成績上傳流程
+    if (!gameState.player.id) {
+      alert('❌ 請先登入才能上傳成績');
       updateLeaderboard().then(() => {
         document.getElementById('leaderboard-overlay').style.display = 'flex';
       });
-    })
-    .catch(() => {
-      alert('❌ 遊戲結束，上傳失敗');
-      updateLeaderboard().then(() => {
-        document.getElementById('leaderboard-overlay').style.display = 'flex';
+    } else {
+      submitScore(
+        gameState.player.id,
+        gameState.currentLevel,
+        gameState.score,
+        vocabCount,
+        trophyCount,
+        bronzeCount,
+        silverCount,
+        goldCount
+      )
+      .then(() => {
+        updateLeaderboard().then(() => {
+          document.getElementById('leaderboard-overlay').style.display = 'flex';
+        });
+      })
+      .catch(err => {
+        console.error('上傳失敗：', err);
+        alert(`❌ 上傳失敗：${err.message || '請稍後再試'}`);
+        updateLeaderboard().then(() => {
+          document.getElementById('leaderboard-overlay').style.display = 'flex';
+        });
       });
-    });
-  return;
-}
+    }
+    return;
+  }
   
   // 背景
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -659,7 +666,18 @@ document.querySelectorAll('.vocab-cell').forEach((cell, idx) => {
 };
 
 // 修完 gameLoop 後，確保這裡有呼叫：
+// 登入後啟動遊戲
 window.addEventListener('DOMContentLoaded', () => {
-  startGame();
+  // 顯示登入 overlay
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-btn').onclick = () => {
+    const pid = document.getElementById('player-id-input').value.trim();
+    if (!/^\d{5}$/.test(pid)) {
+      return alert('請輸入 5 位數字編號');
+    }
+    gameState.player.id = pid;
+    document.getElementById('login-overlay').style.display = 'none';
+    startGame();
+  };
 });
 
