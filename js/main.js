@@ -39,9 +39,9 @@ const keyboardEl = document.getElementById('virtual-keyboard');  // 或你實際
 const MAX_HEALTH = 100;
 const ITEM_SIZE  = 50;
 const healthImg  = new Image();
-healthImg.src    = '../img/health.png';
+healthImg.src    = 'img/health.png';
 const decoyImg   = new Image();
-decoyImg.src     = '../img/dodge.png';
+decoyImg.src     = 'img/dodge.png';
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
 
@@ -49,15 +49,15 @@ const bgImgs = [];
 for (let i = 0; i < 4; i++) {
   const img = new Image();
   // i = 0 對應 background.png，其餘對應 background1~3.png
-  img.src = `../img/background${i === 0 ? '' : i}.png`;
+  img.src = `img/background${i === 0 ? '' : i}.png`;
   bgImgs.push(img);
 }
 // 頭目戰背景
 const bossBg = new Image();
-bossBg.src = '../img/background4.png';
+bossBg.src = 'img/background4.png';
 // 暫停／遊戲結束背景
 const pauseBg = new Image();
-pauseBg.src = '../img/background5.png';
+pauseBg.src = 'img/background5.png';
 const playerImg0    = new Image(); playerImg0.src    = 'img/player0.png';   // 1–10 關
 const playerImgMid  = new Image(); playerImgMid.src  = 'img/player.png';     // 11–20 關
 const playerImg1    = new Image(); playerImg1.src    = 'img/player1.png';   // 21–30 關
