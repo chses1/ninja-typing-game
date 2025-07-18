@@ -12,6 +12,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// 2. **新增：把專案根目錄當靜態資料夾**  
+//    這樣 GET / 就會自動送出 index.html，其他 /css/*、/js/*、/img/* 也能被存取
+app.use(express.static(path.join(__dirname)));
+
+
 // 連接 MongoDB Cloud
 mongoose.connect(process.env.MONGODB_URI, {
   maxPoolSize: 50,
