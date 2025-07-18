@@ -12,10 +12,8 @@ app.use(cors({
   origin: ['https://chses1.github.io']  // 或 simply origin: '*'
 }));
 app.use(express.json());
-
-// 2. **新增：把專案根目錄當靜態資料夾**  
-//    這樣 GET / 就會自動送出 index.html，其他 /css/*、/js/*、/img/* 也能被存取
-app.use(express.static(path.join(__dirname)));
+// 將前端專案根目錄當作靜態資源服務
+app.use(express.static(path.join(__dirname, '..')));
 
 
 // 連接 MongoDB Cloud
@@ -155,6 +153,11 @@ app.delete('/leaderboard', async (req, res) => {
     console.error('🚨 刪除排行榜失敗：', err);
     res.status(500).json({ error: '伺服器刪除失敗' });
   }
+});
+
+// 對於未匹配的路由，回傳前端 index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 // 啟動伺服器
