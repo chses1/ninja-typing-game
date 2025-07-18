@@ -446,7 +446,7 @@ export function startGame() {
       const isUnlocked = unlocked.includes(ach.id);
       return `
         <div class="ach-item${isUnlocked ? '' : ' locked'}">
-          <img src="img/${ach.trophy}-trophy.png" alt="${ach.trophy} 獎盃">
+          <img src="./img/${ach.trophy}-trophy.png" alt="${ach.trophy} 獎盃">
           <div class="ach-name">${ach.name}</div>
         </div>
       `;
