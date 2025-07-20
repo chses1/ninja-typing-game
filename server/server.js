@@ -160,7 +160,7 @@ app.delete('/leaderboard', async (req, res) => {
 });
 
 // 對於未匹配的路由，回傳前端 index.html
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
