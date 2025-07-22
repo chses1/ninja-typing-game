@@ -69,8 +69,16 @@ const kunaiImg      = new Image(); kunaiImg.src      = 'img/enemy-bullet.png';
 window.addEventListener('resize', resize);
 resize();
 function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // 1. 同步 canvas 解析度與畫面上的顯示大小
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width;
+  canvas.height = rect.height;
+
+  // 2. 重新計算主角 Y 座標：剛好在虛擬鍵盤上緣
+  const keyboard = document.getElementById('virtual-keyboard');
+  if (keyboard && window.gameState && window.gameState.player) {
+    window.gameState.player.y = keyboard.offsetTop - window.gameState.player.height;
+  }
 }
 
 // ─── 遊戲狀態 ───────────────────────────────────
