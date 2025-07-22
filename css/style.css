@@ -229,17 +229,27 @@ body, html {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 25%;
-  font-size: 28px;
+  width: 30%;
+  font-size: 20px;
   line-height: 1.4;
   color: #ffffff;
   background: rgba(0, 0, 0, 0.5);  /* 半透明黑色背景 */
   padding: 10px;                   /* 內側留白 */
   z-index: 110;
   pointer-events: none;
-  max-height: calc(1.4em * 3); /* 三行高度 */
+  max-height: calc(1.4em * 4); /* 四行高度 */
   overflow: hidden;
 }
+
+/* iPad / 小螢幕下再微調 */
+@media (max-width: 1024px) {
+  #instructions {
+    font-size: 18px;
+    width: 35%;
+    max-height: calc(1.4em * 5);
+  }
+}
+
 
 .vocab-row {
   display: flex;
