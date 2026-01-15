@@ -159,9 +159,17 @@ if (gameState.bossActive) {
   window.addEventListener('keydown', e => {
       // ✅ 如果登入畫面還在，就「完全不要處理遊戲鍵盤」
   const loginOverlay = document.getElementById('login-overlay');
-  if (loginOverlay && loginOverlay.style.display !== 'none') {
-    return; // ❗讓 input 正常吃鍵盤
-  }
+const loginVisible = loginOverlay && window.getComputedStyle(loginOverlay).display !== 'none';
+if (loginVisible) {
+  return; // ✅ 登入畫面：完全不處理，讓 input 正常輸入
+}
+
+// ✅ 另外保險：如果目前正在輸入框，就不要攔截（避免未來你加更多表單時出事）
+const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable)) {
+  return;
+}
+
     // Debug 快捷鍵：Ctrl+G 跳關
     if (e.ctrlKey && e.key.toUpperCase() === 'G') {
       const lvl = parseInt(prompt('跳到第幾關？請輸入數字'), 10);

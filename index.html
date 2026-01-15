@@ -231,32 +231,39 @@
   </div>
 
 <script>
-  // 等到 DOMContentLoaded 才註冊偵聽
   document.addEventListener('DOMContentLoaded', () => {
-    // 監聽全域鍵盤事件
-  window.addEventListener('keydown', (e) => {
-  const loginOv = document.getElementById('login-overlay');
 
-  // ✅ 只在登入畫面時啟用 Ctrl + A 進後台
-  if (loginOv && loginOv.style.display !== 'none') {
-    if (e.ctrlKey && e.key.toUpperCase() === 'A') {
-      e.preventDefault();
-      const pw = prompt('請輸入後台管理密碼');
-      if (pw !== '1070') {
-        alert('密碼錯誤');
+    function isLoginVisible() {
+      const ov = document.getElementById('login-overlay');
+      if (!ov) return false;
+      return window.getComputedStyle(ov).display !== 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      // ✅ 只在登入畫面時才允許快捷鍵進後台
+      if (isLoginVisible()) {
+        const key = e.key.toUpperCase();
+        const isAdminHotkey = (e.ctrlKey || e.metaKey) && key === 'A'; // ✅ Mac 支援 Cmd + A
+
+        if (isAdminHotkey) {
+          e.preventDefault();
+          const pw = prompt('請輸入後台管理密碼');
+          if (pw !== '1070') {
+            alert('密碼錯誤');
+            return;
+          }
+          window.location.href = './admin.html';
+        }
+
+        // ✅ 其他鍵盤事件都不攔截，讓 input 正常輸入
         return;
       }
-      window.location.href = './admin.html';
-    }
-    // ✅ 其他鍵盤一律不管，讓 input 正常輸入
-    return;
-  }
 
-  // ✅ 登入後：完全不處理鍵盤（遊戲鍵盤交給 input.js）
-});
-
+      // ✅ 非登入畫面：這裡不做任何事（遊戲鍵盤交給 input.js）
+    });
   });
 </script>
+
 <script type="module">
     import { startGame } from './js/main.js';
 
@@ -270,9 +277,13 @@
 
     // 1. 點擊 Splash → 顯示登入視窗
     splash.addEventListener('click', () => {
-      splash.style.display   = 'none';
-      loginOv.style.display  = 'flex';
-    });
+  splash.style.display   = 'none';
+  loginOv.style.display  = 'flex';
+
+  // ✅ 自動把游標放到輸入框
+  setTimeout(() => playerIdEl.focus(), 0);
+});
+
   // 即時過濾：只留數字並且最多 5 位
   playerIdEl.addEventListener('input', () => {
     let v = playerIdEl.value.replace(/\D/g, '').slice(0, 5);
