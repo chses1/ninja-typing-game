@@ -127,7 +127,6 @@ if (gameState.bossActive) {
   // Optional：若要讓「按錯字母」也有回饋，可以在這裡加個 else 來重置 combo、或做其他處理
   return;
 }
-console.log('input', L, 'expect', targetWord[progress], 'progress was', progress);
   }
 
   // 虛擬鍵盤
@@ -158,6 +157,11 @@ console.log('input', L, 'expect', targetWord[progress], 'progress was', progress
 
   // 實體鍵盤
   window.addEventListener('keydown', e => {
+      // ✅ 如果登入畫面還在，就「完全不要處理遊戲鍵盤」
+  const loginOverlay = document.getElementById('login-overlay');
+  if (loginOverlay && loginOverlay.style.display !== 'none') {
+    return; // ❗讓 input 正常吃鍵盤
+  }
     // Debug 快捷鍵：Ctrl+G 跳關
     if (e.ctrlKey && e.key.toUpperCase() === 'G') {
       const lvl = parseInt(prompt('跳到第幾關？請輸入數字'), 10);
@@ -185,6 +189,9 @@ console.log('input', L, 'expect', targetWord[progress], 'progress was', progress
 
 // 暫停選單控制
 function showPauseMenu() {
+  if (!pauseOverlay) pauseOverlay = document.getElementById('pause-overlay');
+  if (!pauseOverlay) return;
+
   pauseOverlay.style.display = 'flex';
   if (window.gameState && window.gameState.practiceTimer) {
     window.gameState.paused = true;
@@ -192,7 +199,11 @@ function showPauseMenu() {
     clearTimeout(window.gameState.practiceTimer);
   }
 }
+
 function hidePauseMenu() {
+  if (!pauseOverlay) pauseOverlay = document.getElementById('pause-overlay');
+  if (!pauseOverlay) return;
+
   pauseOverlay.style.display = 'none';
   if (window.gameState && window.gameState._remainingPractice > 0) {
     window.gameState.paused = false;

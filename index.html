@@ -52,8 +52,8 @@
     <div class="login-box">
       <h2>請輸入玩家編號</h2>
       <input
-  type="text"
   id="player-id"
+  type="text"
   placeholder="例如：30101"
   maxlength="5"
   inputmode="numeric"
@@ -63,6 +63,7 @@
   autocorrect="off"
   spellcheck="false"
 />
+
       <button id="login-btn">登入遊戲</button>
       <p id="login-error" style="color: red; margin-top: 8px;"></p>
     </div>
@@ -184,58 +185,6 @@
     </div>
   </div>
 
-<script type="module">
-    import { startGame } from './js/main.js';
-
-    const splash     = document.getElementById('splash-screen');
-    const loginOv    = document.getElementById('login-overlay');
-    const gameCont   = document.getElementById('game-container');
-    const vkBoard    = document.getElementById('virtual-keyboard');
-    const loginBtn   = document.getElementById('login-btn');
-    const playerIdEl = document.getElementById('player-id');
-    const errorEl    = document.getElementById('login-error');
-
-    // 1. 點擊 Splash → 顯示登入視窗
-    splash.addEventListener('click', () => {
-      splash.style.display   = 'none';
-      loginOv.style.display  = 'flex';
-    });
-  // 即時過濾：只留數字並且最多 5 位
-  playerIdEl.addEventListener('input', () => {
-    let v = playerIdEl.value.replace(/\D/g, '').slice(0, 5);
-    if (playerIdEl.value !== v) playerIdEl.value = v;
-  });
-
-  loginBtn.addEventListener('click', () => {
-    const id = playerIdEl.value.trim();
-    // 僅接受 **正好** 5 位數字
-    if (!/^\d{5}$/.test(id)) {
-      errorEl.textContent = '請輸入 **正好 5 位** 數字編號';
-      return;
-    }
-
-    // 1. 設定玩家編號
-    window.gameState.player.id = id;
-
-    // 2. 清空上一位玩家的詞彙圖鑑與成就
-    localStorage.setItem('unlockedWords', JSON.stringify([]));
-    localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
-    window.gameState.unlockedWords       = [];
-    window.gameState.achievementsUnlocked = [];
-
-    // 3. 隱藏登入、顯示遊戲
-    loginOv.style.display  = 'none';
-    gameCont.style.display = 'block';
-    vkBoard.style.display  = 'flex';
-
-    // 讓 canvas 正確調整尺寸
-    window.dispatchEvent(new Event('resize'));
-
-    // 4. 啟動遊戲
-    startGame();
-  });
-</script>
-
 <!-- 排行榜 Overlay -->
 <div id="leaderboard-overlay"
      style="display:none;
@@ -285,25 +234,82 @@
   // 等到 DOMContentLoaded 才註冊偵聽
   document.addEventListener('DOMContentLoaded', () => {
     // 監聽全域鍵盤事件
-    window.addEventListener('keydown', (e) => {
-      // 條件：當目前顯示登入遮罩 (#login-overlay) 時，且按下 Ctrl + A
-      const loginOv = document.getElementById('login-overlay');
-      if (loginOv && loginOv.style.display !== 'none') {
-        // 檢查 Ctrl + key 為 'A' 或 'a'
-        if (e.ctrlKey && e.key.toUpperCase() === 'A') {
-          e.preventDefault();
-          const pw = prompt('請輸入後台管理密碼');
-          if (pw !== '1070') {
-          alert('密碼錯誤');
+  window.addEventListener('keydown', (e) => {
+  const loginOv = document.getElementById('login-overlay');
+
+  // ✅ 只在登入畫面時啟用 Ctrl + A 進後台
+  if (loginOv && loginOv.style.display !== 'none') {
+    if (e.ctrlKey && e.key.toUpperCase() === 'A') {
+      e.preventDefault();
+      const pw = prompt('請輸入後台管理密碼');
+      if (pw !== '1070') {
+        alert('密碼錯誤');
         return;
-        }
-        // 跳轉到 admin.html
-          window.location.href = './admin.html';
-        }
       }
-    });
+      window.location.href = './admin.html';
+    }
+    // ✅ 其他鍵盤一律不管，讓 input 正常輸入
+    return;
+  }
+
+  // ✅ 登入後：完全不處理鍵盤（遊戲鍵盤交給 input.js）
+});
+
   });
 </script>
+<script type="module">
+    import { startGame } from './js/main.js';
 
+    const splash     = document.getElementById('splash-screen');
+    const loginOv    = document.getElementById('login-overlay');
+    const gameCont   = document.getElementById('game-container');
+    const vkBoard    = document.getElementById('virtual-keyboard');
+    const loginBtn   = document.getElementById('login-btn');
+    const playerIdEl = document.getElementById('player-id');
+    const errorEl    = document.getElementById('login-error');
+
+    // 1. 點擊 Splash → 顯示登入視窗
+    splash.addEventListener('click', () => {
+      splash.style.display   = 'none';
+      loginOv.style.display  = 'flex';
+    });
+  // 即時過濾：只留數字並且最多 5 位
+  playerIdEl.addEventListener('input', () => {
+    let v = playerIdEl.value.replace(/\D/g, '').slice(0, 5);
+    if (playerIdEl.value !== v) playerIdEl.value = v;
+  });
+
+  loginBtn.addEventListener('click', () => {
+    const id = playerIdEl.value.trim();
+    // 僅接受 **正好** 5 位數字
+    if (!/^\d{5}$/.test(id)) {
+      errorEl.textContent = '請輸入正好 5 位數字編號';
+      return;
+    }
+if (!window.gameState || !window.gameState.player) {
+  errorEl.textContent = '遊戲初始化尚未完成，請重新整理後再試一次';
+  return;
+}
+    // 1. 設定玩家編號
+    window.gameState.player.id = id;
+
+    // 2. 清空上一位玩家的詞彙圖鑑與成就
+    localStorage.setItem('unlockedWords', JSON.stringify([]));
+    localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
+    window.gameState.unlockedWords       = [];
+    window.gameState.achievementsUnlocked = [];
+
+    // 3. 隱藏登入、顯示遊戲
+    loginOv.style.display  = 'none';
+    gameCont.style.display = 'block';
+    vkBoard.style.display  = 'flex';
+
+    // 讓 canvas 正確調整尺寸
+    window.dispatchEvent(new Event('resize'));
+
+    // 4. 啟動遊戲
+    startGame();
+  });
+</script>
 </body>
 </html>
