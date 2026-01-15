@@ -159,6 +159,25 @@ app.delete('/leaderboard', async (req, res) => {
   }
 });
 
+// ✅ 刪除單一玩家成績：DELETE /leaderboard/:playerId
+app.delete('/leaderboard/:playerId', async (req, res) => {
+  try {
+    const { playerId } = req.params;
+
+    const result = await Leaderboard.deleteOne({ playerId });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: '找不到該玩家成績' });
+    }
+
+    res.status(200).json({ message: `玩家 ${playerId} 成績已刪除` });
+  } catch (err) {
+    console.error('🚨 刪除單一玩家失敗：', err);
+    res.status(500).json({ error: '伺服器刪除失敗' });
+  }
+});
+
+
 // 對於未匹配的路由，回傳前端 index.html
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'index.html'));

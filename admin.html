@@ -66,6 +66,17 @@
       margin-top: 12px;
       color: green;
     }
+    .delete-one-btn {
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+    }
+    .delete-one-btn:hover {
+  filter: brightness(0.95);
+    }
   </style>
 </head>
 <body>
@@ -93,6 +104,7 @@
           <th>銅/銀/金</th>
           <th>總分</th>
           <th>最後更新</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody id="leaderboard-body">
@@ -107,26 +119,74 @@
     const API_BASE = 'https://ninja-typing-game.onrender.com'; // 若你部署在 Render 或其他域名，請改成對應網址
 
     // 1. 取得並顯示所有排行榜資料
-    async function fetchAndRender(entries) {
-      const tbody = document.getElementById('leaderboard-body');
-      tbody.innerHTML = '';
-      // 先把 entries 原始陣列照 totalScore 排序
-      entries.sort((a, b) => b.totalScore - a.totalScore);
-      entries.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${item.playerId}</td>
-          <td>${item.highestLevel}</td>
-          <td>${item.highestScore}</td>
-          <td>${item.vocabCount}</td>
-          <td>${item.bronzeCount}/${item.silverCount}/${item.goldCount}</td>
-          <td>${item.totalScore}</td>
-          <td>${new Date(item.updatedAt).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+  async function fetchAndRender(entries) {
+  const tbody = document.getElementById('leaderboard-body');
+  tbody.innerHTML = '';
+
+  // 先把 entries 原始陣列照 totalScore 排序
+  entries.sort((a, b) => b.totalScore - a.totalScore);
+
+  entries.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td>${item.playerId}</td>
+      <td>${item.highestLevel}</td>
+      <td>${item.highestScore}</td>
+      <td>${item.vocabCount}</td>
+      <td>${item.bronzeCount}/${item.silverCount}/${item.goldCount}</td>
+      <td>${item.totalScore}</td>
+      <td>${new Date(item.updatedAt).toLocaleString()}</td>
+      <td>
+        <button class="delete-one-btn" data-playerid="${item.playerId}">
+          刪除
+        </button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  // ✅ 統一綁定刪除事件（渲染完再綁）
+  document.querySelectorAll('.delete-one-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const playerId = btn.dataset.playerid;
+
+      if (!confirm(`確定要刪除玩家 ${playerId} 的成績嗎？此操作不可復原！`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/leaderboard/${encodeURIComponent(playerId)}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          document.getElementById('message').textContent = `✅ 已刪除玩家 ${playerId} 的成績`;
+
+          // ✅ 重新載入資料，避免搜尋/排序狀態不同步
+          const allData = await loadAll();
+          window.LBData = allData;
+
+          // 若目前有輸入班級，就維持篩選結果
+          const cls = document.getElementById('class-input').value.trim();
+          if (!cls) {
+            fetchAndRender(window.LBData);
+          } else {
+            const filtered = window.LBData.filter(item => item.playerId.startsWith(cls));
+            fetchAndRender(filtered);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(`❌ 刪除失敗：${err.error || '請稍後再試'}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('❌ 網路或伺服器錯誤，無法刪除');
+      }
+    });
+  });
+}
+
 
     // 2. 從後端取得所有資料
     async function loadAll() {
