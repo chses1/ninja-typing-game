@@ -12,16 +12,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
  // 暫停選單：呼叫成就紀錄
  document.getElementById('pause-ach-btn').onclick = () => {
-   // 1. 關掉暫停選單
-   pauseOverlay.style.display = 'none';
-   // 2. 觸發「ach-btn」的 click 事件，顯示成就 Overlay
-   document.getElementById('ach-btn').click();
- };  
-  // 暫停選單：呼叫過關按鈕邏輯
-  document.getElementById('pause-vocab-btn').onclick = () => {
-    pauseOverlay.style.display = 'none';
-    document.getElementById('vocab-btn').click();
-  };
+  pauseOverlay.style.display = 'none';
+  stopPauseTips(); // ✅
+  document.getElementById('ach-btn').click();
+};
+
+document.getElementById('pause-vocab-btn').onclick = () => {
+  pauseOverlay.style.display = 'none';
+  stopPauseTips(); // ✅
+  document.getElementById('vocab-btn').click();
+};
+
 
   document.getElementById('pause-resume-btn').onclick = () => hidePauseMenu();
 
@@ -36,6 +37,52 @@ window.addEventListener('DOMContentLoaded', () => {
   if (pauseOverlay) pauseOverlay.style.display = 'flex';
 };
 });
+
+// ✅ 暫停提示輪播（全域）
+let pauseTipTimer = null;
+let pauseTipIndex = 0;
+
+const PAUSE_TIPS = [
+  '💥 爆擊：連擊（Combo）越高，輸入越穩，分數累積越快！請盡量不要按錯字母。',
+  '🎯 練習階段：打中標靶 +10 分。維持連擊可以更快累積高分與道具。',
+  '🧿 分身符：Boss 手裡劍打到你時，如果你有分身符會優先消耗 1 張並免扣血。',
+  '🧪 補血道具：有補血數量時，點一下角色即可補血（每次回 30%）。',
+  '🧠 Boss 攻略：先「攔截」第一枚手裡劍（打出同字母）→ 再依序輸入 Boss 單字攻擊弱點。',
+  '📌 計分重點：穩定不失誤 > 亂按。保持連擊才能拿到更多道具與更高分。',
+  '🔥 進階技巧：先練「看字母→立即按」的反射；Boss 戰時專心看第一枚手裡劍字母最重要。'
+];
+
+function startPauseTips() {
+  const tipEl = document.getElementById('pause-tip');
+  if (!tipEl) return;
+
+  // 避免重複啟動
+  if (pauseTipTimer) clearInterval(pauseTipTimer);
+
+  // 每次暫停都從不同提示開始（更像「輪流出現」）
+  pauseTipIndex = Math.floor(Math.random() * PAUSE_TIPS.length);
+
+  const renderTip = () => {
+    tipEl.classList.remove('fade');
+    tipEl.textContent = PAUSE_TIPS[pauseTipIndex];
+    // 重新觸發動畫
+    void tipEl.offsetWidth;
+    tipEl.classList.add('fade');
+
+    pauseTipIndex = (pauseTipIndex + 1) % PAUSE_TIPS.length;
+  };
+
+  renderTip();
+  pauseTipTimer = setInterval(renderTip, 4500); // 4.5 秒換一次
+}
+
+function stopPauseTips() {
+  if (pauseTipTimer) {
+    clearInterval(pauseTipTimer);
+    pauseTipTimer = null;
+  }
+}
+
 
 export function setupInput(gameState) {
   let isUpper = true;
@@ -201,6 +248,8 @@ function showPauseMenu() {
   if (!pauseOverlay) return;
 
   pauseOverlay.style.display = 'flex';
+startPauseTips(); // ✅ 新增：開始輪播提示
+
   if (window.gameState && window.gameState.practiceTimer) {
     window.gameState.paused = true;
     window.gameState._remainingPractice = window.gameState.practiceEnd - Date.now();
@@ -213,6 +262,8 @@ function hidePauseMenu() {
   if (!pauseOverlay) return;
 
   pauseOverlay.style.display = 'none';
+stopPauseTips(); // ✅ 新增：停止輪播提示
+
   if (window.gameState && window.gameState._remainingPractice > 0) {
     window.gameState.paused = false;
     window.gameState.practiceTimer = setTimeout(
