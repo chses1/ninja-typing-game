@@ -1,6 +1,6 @@
 // js/input.js
 
-import { showLevelOverlay } from './main.js';
+import { showLevelOverlay, checkAchievements } from './main.js';
 import { animateCombo } from './ui.js';
 
 // 延遲在 DOMContentLoaded 再抓取 Overlay 元素
@@ -248,6 +248,15 @@ function showPauseMenu() {
   if (!pauseOverlay) return;
 
   pauseOverlay.style.display = 'flex';
+    // ✅ 暫停成就：第一次暫停 + 暫停次數累計
+  if (window.gameState) {
+    window.gameState.pauseUsed = true;
+    window.gameState.pauseCount = (window.gameState.pauseCount || 0) + 1;
+
+    // ✅ 立刻檢查成就（不用等過關）
+    checkAchievements();
+  }
+
 startPauseTips(); // ✅ 新增：開始輪播提示
 
   if (window.gameState && window.gameState.practiceTimer) {

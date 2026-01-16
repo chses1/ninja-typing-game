@@ -110,6 +110,14 @@ const gameState = {
   unlockedWords: JSON.parse(localStorage.getItem('unlockedWords') || '[]'),
   noErrorPractice: true,    // 練習階段 30 秒內是否無失誤
   gameOver: false,            // ← 新增：遊戲是否已結束
+    // ✅ 暫停成就用
+  pauseUsed: false,
+  pauseCount: 0,
+
+  // ✅ 連續成就用（練習無失誤 / Boss 不掉血）
+  consecutiveBossHealthIntactCount: 0,
+  consecutiveNoErrorPracticeCount: 0,
+
 };
 window.gameState = gameState;
 
@@ -520,6 +528,10 @@ function resetGame() {
   gameState.achievementsUnlocked     = [];
   gameState.noErrorPractice          = true;
   gameState.gameOver                 = false;
+  gameState.pauseUsed = false;
+  gameState.pauseCount = 0;
+  gameState.consecutiveBossHealthIntactCount = 0;
+  gameState.consecutiveNoErrorPracticeCount = 0;
 
   // 清空本機紀錄
   localStorage.setItem('unlockedWords', JSON.stringify([]));
@@ -565,11 +577,27 @@ canvas.addEventListener('touchstart', e => {
 });
 
 export function showLevelOverlay() {
-  // 一進來就先解鎖過關成就（例如「完成第 1 關」）
+  // ✅ 先更新「連續」計數，再檢查成就（不然 ach17/18/27/28 永遠不會過）
+  if (gameState.bossHealthIntact) {
+    gameState.consecutiveBossHealthIntactCount += 1;
+  } else {
+    gameState.consecutiveBossHealthIntactCount = 0;
+  }
+
+  if (gameState.noErrorPractice) {
+    gameState.consecutiveNoErrorPracticeCount += 1;
+  } else {
+    gameState.consecutiveNoErrorPracticeCount = 0;
+  }
+
+  // ✅ 再解鎖成就
   checkAchievements();
+
   const ov   = document.getElementById('level-overlay');
   const txt  = document.getElementById('level-text');
   const btn  = document.getElementById('level-btn');
+
+  // ...（下面維持你原本的程式）
 
   // 過關後解鎖單字
 const entry = vocabulary.find(v => v.level === gameState.currentLevel);
