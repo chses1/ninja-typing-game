@@ -50,6 +50,18 @@
       background: #e74c3c;
       color: white;
     }
+    .right-actions{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+/* 返回首頁按鈕 */
+.controls button#back-btn{
+  background:#2ecc71;
+  color:white;
+}
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -88,8 +100,12 @@
         <input type="text" id="class-input" placeholder="輸入班級編號 (例如：301)" />
         <button id="search-btn">搜尋</button>
       </div>
-      <!-- 清除所有成績按鈕 -->
-      <button id="clear-btn">清除所有成績</button>
+      <!-- 右側按鈕群組 -->
+<div class="right-actions">
+  <button id="back-btn">返回遊戲首頁</button>
+  <button id="clear-btn">清除所有成績</button>
+</div>
+
     </div>
 
     <!-- 資料表 -->
@@ -147,6 +163,11 @@
 
     tbody.appendChild(tr);
   });
+
+  // 返回遊戲首頁
+document.getElementById('back-btn').addEventListener('click', () => {
+  window.location.href = './index.html';
+});
 
   // ✅ 統一綁定刪除事件（渲染完再綁）
   document.querySelectorAll('.delete-one-btn').forEach(btn => {
