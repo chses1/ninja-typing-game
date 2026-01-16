@@ -254,7 +254,7 @@ function showPauseMenu() {
     window.gameState.pauseCount = (window.gameState.pauseCount || 0) + 1;
 
     // ✅ 立刻檢查成就（不用等過關）
-    checkAchievements();
+    checkAchievements(['ach09', 'ach19']);
   }
 
 startPauseTips(); // ✅ 新增：開始輪播提示

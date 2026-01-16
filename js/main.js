@@ -87,7 +87,7 @@ const gameState = {
   player:         { id:'', x:0, y:0, width:0, height:0 },
   health:         100,
   bossHealthAtStart: null,   // 頭目戰開始前的血量
-  bossHealthIntact: true,    // 頭目戰期間血量是否未減少
+  bossHealthIntact: false,    // 頭目戰期間血量是否未減少
   score:          0,
   hitCount:       0,    // 累積命中目標次數
   paused:         false,
@@ -108,7 +108,7 @@ const gameState = {
   items:         [],
   bossDefeatedCount: 0, // 打倒boss數
   unlockedWords: JSON.parse(localStorage.getItem('unlockedWords') || '[]'),
-  noErrorPractice: true,    // 練習階段 30 秒內是否無失誤
+  noErrorPractice: false,    // 練習階段 30 秒內是否無失誤
   gameOver: false,            // ← 新增：遊戲是否已結束
     // ✅ 暫停成就用
   pauseUsed: false,
@@ -120,6 +120,126 @@ const gameState = {
 
 };
 window.gameState = gameState;
+
+// ===============================
+// 🛠 成就偵錯面板（Ctrl/Cmd + D 開關）
+// ===============================
+let achDebugVisible = false;
+let achDebugTimer = null;
+
+function ensureAchDebugPanel() {
+  if (document.getElementById('ach-debug-panel')) return;
+
+  const panel = document.createElement('div');
+  panel.id = 'ach-debug-panel';
+  panel.style.cssText = `
+    position: fixed;
+    right: 12px;
+    top: 12px;
+    width: min(520px, 92vw);
+    max-height: 80vh;
+    overflow: auto;
+    z-index: 99999;
+    background: rgba(0,0,0,0.88);
+    color: #fff;
+    border: 2px solid #ffea00;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: monospace;
+    display: none;
+  `;
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div style="font-weight:bold;color:#ffea00;">🛠 成就偵錯面板</div>
+      <button id="ach-debug-close"
+        style="background:#ffea00;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;">
+        關閉
+      </button>
+    </div>
+    <div id="ach-debug-state" style="margin-top:10px;font-size:12px;line-height:1.5;"></div>
+    <hr style="border:0;border-top:1px solid #555;margin:10px 0;">
+    <div id="ach-debug-list" style="font-size:12px;line-height:1.6;"></div>
+  `;
+
+  document.body.appendChild(panel);
+
+  document.getElementById('ach-debug-close').onclick = () => {
+    toggleAchDebug(false);
+  };
+}
+
+function renderAchDebugPanel() {
+  const panel = document.getElementById('ach-debug-panel');
+  if (!panel) return;
+
+  const stateEl = document.getElementById('ach-debug-state');
+  const listEl = document.getElementById('ach-debug-list');
+  const gs = window.gameState;
+
+  // ✅ 顯示一些關鍵狀態
+  stateEl.textContent =
+    `level=${gs.currentLevel} score=${gs.score} hit=${gs.hitCount} maxCombo=${gs.maxCombo}\n` +
+    `pauseUsed=${gs.pauseUsed} pauseCount=${gs.pauseCount}\n` +
+    `bossActive=${gs.bossActive} bossHealthIntact=${gs.bossHealthIntact}\n` +
+    `noErrorPractice=${gs.noErrorPractice}\n` +
+    `consecutiveBossHealthIntact=${gs.consecutiveBossHealthIntactCount} consecutiveNoErrorPractice=${gs.consecutiveNoErrorPracticeCount}`;
+
+  // ✅ 每個成就目前 check 結果
+  const unlocked = gs.achievementsUnlocked || [];
+  listEl.innerHTML = achievements.map(ach => {
+    const isUnlocked = unlocked.includes(ach.id);
+
+    let ok = false;
+    let err = null;
+    try {
+      ok = typeof ach.check === 'function' ? !!ach.check(gs) : false;
+    } catch (e) {
+      err = e?.message || String(e);
+    }
+
+    const color = isUnlocked ? '#7CFC00' : (ok ? '#ffd700' : '#aaa');
+
+    return `
+      <div style="padding:6px 0;border-bottom:1px dashed #444;">
+        <span style="color:${color};font-weight:bold;">
+          ${isUnlocked ? '✅' : (ok ? '⚠️' : '⬜')} ${ach.id}
+        </span>
+        <span style="color:#ffea00;"> ${ach.name}</span>
+        <div style="margin-left:18px;color:#ccc;">
+          check=${err ? `ERROR: ${err}` : ok}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleAchDebug(force = null) {
+  ensureAchDebugPanel();
+  const panel = document.getElementById('ach-debug-panel');
+
+  achDebugVisible = (force === null) ? !achDebugVisible : !!force;
+  panel.style.display = achDebugVisible ? 'block' : 'none';
+
+  if (achDebugTimer) {
+    clearInterval(achDebugTimer);
+    achDebugTimer = null;
+  }
+
+  if (achDebugVisible) {
+    renderAchDebugPanel();
+    achDebugTimer = setInterval(renderAchDebugPanel, 250);
+  }
+}
+
+// Ctrl/Cmd + D 開關
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toUpperCase();
+  const isHotkey = (e.ctrlKey || e.metaKey) && key === 'D';
+  if (!isHotkey) return;
+  e.preventDefault();
+  toggleAchDebug();
+});
 
 // ① 先保留原本的單一通知函式
 function showAchNotification(name, desc, onClose) {
@@ -146,11 +266,17 @@ function showAchQueue(list) {
 }
 
 // ③ 改寫 checkAchievements：只收集、最後呼叫 queue
-export function checkAchievements() {
+// ✅ 改成可指定只檢查某些成就 id
+export function checkAchievements(onlyIds = null) {
   const unlocked = gameState.achievementsUnlocked;
   const newly = [];
 
-  for (const ach of achievements) {
+  // 若有指定 onlyIds，就只檢查那幾個
+  const list = Array.isArray(onlyIds)
+    ? achievements.filter(a => onlyIds.includes(a.id))
+    : achievements;
+
+  for (const ach of list) {
     if (
       !unlocked.includes(ach.id) &&
       typeof ach.check === 'function' &&
@@ -162,17 +288,12 @@ export function checkAchievements() {
   }
 
   if (newly.length > 0) {
-    // 一次更新 storage
-    localStorage.setItem(
-      'achievementsUnlocked',
-      JSON.stringify(unlocked)
-    );
+    localStorage.setItem('achievementsUnlocked', JSON.stringify(unlocked));
     gameState.achievementsUnlocked = unlocked;
-
-    // 排隊顯示所有新解鎖
     showAchQueue(newly);
   }
 }
+
 
 // ─── 讀入題庫 & 顯示解釋 ───────────────────────────
 function initLevel(level) {
