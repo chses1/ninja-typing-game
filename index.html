@@ -109,22 +109,21 @@
   </div>
 </div>
 
-  <!-- 暫停選單 Overlay -->
-  <div id="pause-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.83);z-index:3500;align-items:center;justify-content:center;">
-    <div style="background:#222;padding:40px 32px 24px 32px;border-radius:24px;min-width:220px;max-width:90vw;text-align:center;">
-     <div style="font-size:2em;color:#ffea00;margin-bottom:14px;">遊戲暫停</div>
+<!-- 暫停選單 Overlay -->
+<div id="pause-overlay">
+  <div class="pause-box">
+    <div class="pause-title">遊戲暫停</div>
 
-<!-- ✅ 輪播提示文字 -->
-<div id="pause-tip" class="pause-tip">
-  小提示：練習階段打得越準，連擊越高越容易拿到道具！
+    <div id="pause-tip" class="pause-tip">
+      小提示：練習階段打得越準，連擊越高越容易拿到道具！
+    </div>
+
+    <button id="pause-vocab-btn" class="pause-btn">📖 詞彙圖鑑</button>
+    <button id="pause-ach-btn" class="pause-btn">🏆 成就紀錄</button>
+    <button id="pause-resume-btn" class="pause-btn pause-resume">繼續遊戲</button>
+  </div>
 </div>
 
-      <button id="pause-vocab-btn" class="pause-btn" style="margin:12px 0;width:80%;font-size:1.2em;">📖 詞彙圖鑑</button><br>
-      <button id="pause-ach-btn" class="pause-btn" style="margin:12px 0;width:80%;font-size:1.2em;">🏆 成就紀錄</button><br>
-      <button id="pause-resume-btn" class="pause-btn" style="margin:22px 0 0 0;width:80%;font-size:1.2em;background:#ffea00;color:#222;">繼續遊戲</button>
-
-    </div>
-  </div>
 
   <!-- 詞彙圖鑑 Overlay -->
   <div id="vocab-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:3000;justify-content:center;align-items:center;color:white;">
