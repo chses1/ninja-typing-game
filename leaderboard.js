@@ -53,11 +53,11 @@ function setActiveTab(tabName, allData, classData, classPrefix) {
 
   if (showClass) {
     subtitle.textContent = classPrefix
-      ? `班級排行榜（${classPrefix}）`
-      : '班級排行榜';
+      ? `目前顯示：${classPrefix} 班級排行榜`
+      : '目前顯示：班級排行榜';
     renderLeaderboardTable(classData);
   } else {
-    subtitle.textContent = '全部排行榜';
+    subtitle.textContent = '目前顯示：全部排行榜';
     renderLeaderboardTable(allData);
   }
 }
@@ -90,7 +90,7 @@ export async function updateLeaderboard(playerId = '') {
 
     if (classBtn) {
       classBtn.style.display = classPrefix ? 'inline-flex' : 'none';
-      classBtn.textContent = classPrefix ? `${classPrefix}班級排行` : '班級排行';
+      classBtn.textContent = classPrefix ? '本班排行' : '班級排行';
     }
 
     if (allBtn) {
@@ -100,7 +100,7 @@ export async function updateLeaderboard(playerId = '') {
       classBtn.onclick = () => setActiveTab('class', allData, classData, classPrefix);
     }
 
-    if (classPrefix && classData.length > 0) {
+    if (classPrefix) {
       setActiveTab('class', allData, classData, classPrefix);
     } else {
       setActiveTab('all', allData, classData, classPrefix);
