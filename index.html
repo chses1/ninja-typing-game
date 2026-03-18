@@ -198,8 +198,13 @@
             background:rgba(0,0,0,0.85);
             z-index:3600;
             justify-content:center;align-items:center;">
-  <div style="background:#222;padding:30px;border-radius:16px;max-height:80vh;overflow:auto;color:#fff;">
-    <h2 style="text-align:center;margin-bottom:16px;">排行榜</h2>
+  <div id="leaderboard-panel" style="background:#222;padding:30px;border-radius:16px;max-height:80vh;overflow:auto;color:#fff;min-width:min(920px,92vw);max-width:92vw;">
+    <h2 style="text-align:center;margin-bottom:10px;">排行榜</h2>
+    <div id="leaderboard-tabs" style="display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+      <button id="leaderboard-tab-all" class="leaderboard-tab active">全部排行榜</button>
+      <button id="leaderboard-tab-class" class="leaderboard-tab" style="display:none;">班級排行榜</button>
+    </div>
+    <div id="leaderboard-subtitle" style="text-align:center;color:#ffd54a;margin-bottom:14px;font-size:18px;">全部排行榜</div>
     <table style="width:100%;border-collapse:collapse;">
             <thead>
         <tr>
