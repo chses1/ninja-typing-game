@@ -356,7 +356,7 @@ function gameLoop() {
     // 新增登入檢查與成績上傳流程
     if (!gameState.player.id) {
       alert('❌ 請先登入才能上傳成績');
-      updateLeaderboard().then(() => {
+      updateLeaderboard('').then(() => {
         document.getElementById('leaderboard-overlay').style.display = 'flex';
       });
     } else {
@@ -371,14 +371,14 @@ function gameLoop() {
         goldCount
       )
       .then(() => {
-        updateLeaderboard().then(() => {
+        updateLeaderboard(gameState.player.id).then(() => {
           document.getElementById('leaderboard-overlay').style.display = 'flex';
         });
       })
       .catch(err => {
         console.error('上傳失敗：', err);
         alert(`❌ 上傳失敗：${err.message || '請稍後再試'}`);
-        updateLeaderboard().then(() => {
+        updateLeaderboard(gameState.player.id).then(() => {
           document.getElementById('leaderboard-overlay').style.display = 'flex';
         });
       });
@@ -574,8 +574,11 @@ export function startGame() {
   const canvas = document.getElementById('game-canvas');
   canvas.tabIndex = 0;
   canvas.focus();
-  // 關鍵！註冊輸入處理
-  setupInput(window.gameState);
+  // 關鍵！註冊輸入處理（只註冊一次，避免重新開始後重複綁定）
+  if (!gameState._inputInitialized) {
+    setupInput(window.gameState);
+    gameState._inputInitialized = true;
+  }
   initEntities();
   gameState.currentLevel = 1;
   initLevel(1);
@@ -620,56 +623,105 @@ document.getElementById('ach-close').onclick = () => {
    document.getElementById('ach-detail-modal').style.display = 'none';
  };
 
-// 關閉排行榜並重新啟動遊戲
-document.getElementById('leaderboard-close').onclick = () => {
-  // 1. 隱藏排行榜
-  document.getElementById('leaderboard-overlay').style.display = 'none';
-  // 隱藏背景層、顯示鍵盤，再重置遊戲
-  gameoverBg.style.display = 'none';
-  keyboardEl.style.display = 'flex';
-  // 2. 重置並重啟遊戲
-  resetGame();
-};
+function resetGameState({ keepPlayerId = true } = {}) {
+  const currentPlayerId = gameState.player.id;
 
-
-function resetGame() {
-  // 一、重置遊戲狀態
-  gameState.currentLevel             = 1;
-  gameState.health                   = 100;
-  gameState.score                    = 0;
-  gameState.hitCount                 = 0;
-  gameState.combo                    = 0;
-  gameState.maxCombo                 = 0;
-  gameState.bossActive               = false;
-  gameState.bossDefeatedCount        = 0;
-  gameState.targets                  = [];
-  gameState.playerProjectiles        = [];
-  gameState.bossProjectiles          = [];
-  gameState.unlockedWords            = [];
-  gameState.achievementsUnlocked     = [];
-  gameState.noErrorPractice          = true;
-  gameState.gameOver                 = false;
+  gameState.currentLevel = 1;
+  gameState.health = 100;
+  gameState.bossHealthAtStart = null;
+  gameState.bossHealthIntact = false;
+  gameState.score = 0;
+  gameState.hitCount = 0;
+  gameState.paused = false;
+  gameState.targets = [];
+  gameState.playerProjectiles = [];
+  gameState.bossActive = false;
+  gameState.boss = null;
+  gameState.bossProjectiles = [];
+  gameState.threshold = 100;
+  gameState.bossHp = 5;
+  gameState.bossWord = '';
+  gameState.maxCombo = 0;
+  gameState.combo = 0;
+  gameState.decoyCount = 0;
+  gameState.healthCount = 0;
+  gameState.items = [];
+  gameState.bossDefeatedCount = 0;
+  gameState.unlockedWords = [];
+  gameState.achievementsUnlocked = [];
+  gameState.noErrorPractice = true;
+  gameState.gameOver = false;
   gameState.pauseUsed = false;
   gameState.pauseCount = 0;
   gameState.consecutiveBossHealthIntactCount = 0;
   gameState.consecutiveNoErrorPracticeCount = 0;
+  const oldPracticeTimer = gameState.practiceTimer;
+  gameState.practiceTimer = null;
+  gameState.practiceEnd = null;
+  gameState._remainingPractice = 0;
+  gameState.player.id = keepPlayerId ? currentPlayerId : '';
 
-  // 清空本機紀錄
   localStorage.setItem('unlockedWords', JSON.stringify([]));
   localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
 
-  // 清除舊的練習計時器與練習結束時間
-  clearTimeout(gameState.practiceTimer);
-  gameState.practiceTimer = null;
-  gameState.practiceEnd   = null;
+  if (oldPracticeTimer) {
+    clearTimeout(oldPracticeTimer);
+  }
 
-  // 隱藏所有 Overlay
   ['level-overlay','pause-overlay','vocab-overlay','ach-overlay','leaderboard-overlay']
-    .forEach(id => document.getElementById(id).style.display = 'none');
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+}
 
-  // 二、重新啟動遊戲
+function restartGameSamePlayer() {
+  resetGameState({ keepPlayerId: true });
+  gameoverBg.style.display = 'none';
+  keyboardEl.style.display = 'flex';
+
+  const gameContainer = document.getElementById('game-container');
+  const loginOverlay = document.getElementById('login-overlay');
+  if (loginOverlay) loginOverlay.style.display = 'none';
+  if (gameContainer) gameContainer.style.display = 'block';
+
   startGame();
 }
+
+function returnToLoginScreen() {
+  resetGameState({ keepPlayerId: false });
+  gameoverBg.style.display = 'none';
+  keyboardEl.style.display = 'none';
+
+  const gameContainer = document.getElementById('game-container');
+  const loginOverlay = document.getElementById('login-overlay');
+  const playerIdInput = document.getElementById('player-id');
+  const errorEl = document.getElementById('login-error');
+
+  if (gameContainer) gameContainer.style.display = 'none';
+  if (loginOverlay) loginOverlay.style.display = 'flex';
+  if (playerIdInput) {
+    playerIdInput.value = '';
+    setTimeout(() => playerIdInput.focus(), 0);
+  }
+  if (errorEl) errorEl.textContent = '';
+  localStorage.removeItem('currentPlayerId');
+  window.__leaderboardPlayerId = '';
+}
+
+// 排行榜按鈕
+const leaderboardRestartBtn = document.getElementById('leaderboard-restart');
+if (leaderboardRestartBtn) {
+  leaderboardRestartBtn.onclick = () => {
+    document.getElementById('leaderboard-overlay').style.display = 'none';
+    restartGameSamePlayer();
+  };
+}
+
+document.getElementById('leaderboard-close').onclick = () => {
+  document.getElementById('leaderboard-overlay').style.display = 'none';
+  returnToLoginScreen();
+};
 
 // ↓ 在這裡貼上：點擊／觸控使用補血藥 ↓
 function tryUseHealth(x, y) {

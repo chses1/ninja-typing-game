@@ -176,25 +176,12 @@ body, html {
   cursor: pointer;
 }
 /* style.css */
-/* ✅ 關卡過關 Overlay 按鈕：平板不再變小 */
 #level-overlay .overlay-box .overlay-btn {
-  width: min(560px, 90vw);     /* ✅ 平板可變大，上限 560px */
-  margin: 0 auto 12px auto;
+  width: 90%;
+  max-width: 260px;
+  margin: 0 auto 8px auto;
   display: block;
-
-  padding: 14px 16px;          /* ✅ 增加按鈕高度 */
-  font-size: clamp(18px, 2.6vw, 28px); /* ✅ 平板字更大、手機不爆 */
-  border-radius: 12px;
 }
-
-/* ✅ 讓「下一關」比下面兩顆再更明顯一點（可選但推薦） */
-#level-btn {
-  font-size: clamp(20px, 3.2vw, 32px);
-  padding: 16px 16px;
-  border-radius: 14px;
-}
-
-
 #level-overlay .overlay-box .overlay-btn:last-child {
   margin-bottom: 0;
 }
@@ -674,4 +661,41 @@ body {
 .pause-resume {
   background: #ffea00;
   color: #222;
+}
+
+/* 排行榜分頁 */
+.leaderboard-tab {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #444;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.leaderboard-tab.active {
+  background: #ffea00;
+  color: #222;
+}
+
+#leaderboard-panel table th,
+#leaderboard-panel table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  #leaderboard-panel {
+    padding: 18px !important;
+  }
+
+  .leaderboard-tab {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+
+  #leaderboard-subtitle {
+    font-size: 15px !important;
+  }
 }
