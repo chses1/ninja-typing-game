@@ -8,6 +8,15 @@ function getClassPrefix(playerId) {
   return id.slice(0, 3);
 }
 
+function getRememberedPlayerId() {
+  return (
+    window.__leaderboardPlayerId ||
+    window?.gameState?.player?.id ||
+    localStorage.getItem('currentPlayerId') ||
+    ''
+  );
+}
+
 function renderLeaderboardTable(data) {
   const tbody = document.getElementById('leaderboard-table-body');
   if (!tbody) return;
@@ -68,7 +77,7 @@ function setActiveTab(tabName, allData, classData, classPrefix) {
  */
 export async function updateLeaderboard(playerId = '') {
   try {
-    const actualPlayerId = playerId || window?.gameState?.player?.id || '';
+    const actualPlayerId = playerId || getRememberedPlayerId();
     const classPrefix = getClassPrefix(actualPlayerId);
 
     const res = await fetch(`${API_BASE}/leaderboard`);
@@ -89,15 +98,21 @@ export async function updateLeaderboard(playerId = '') {
     const classBtn = document.getElementById('leaderboard-tab-class');
 
     if (classBtn) {
-      classBtn.style.display = classPrefix ? 'inline-flex' : 'none';
+      classBtn.style.display = classPrefix ? 'inline-flex' : 'inline-flex';
       classBtn.textContent = classPrefix ? '本班排行' : '班級排行';
+      classBtn.disabled = !classPrefix;
+      classBtn.style.opacity = classPrefix ? '1' : '0.5';
+      classBtn.style.cursor = classPrefix ? 'pointer' : 'not-allowed';
     }
 
     if (allBtn) {
       allBtn.onclick = () => setActiveTab('all', allData, classData, classPrefix);
     }
     if (classBtn) {
-      classBtn.onclick = () => setActiveTab('class', allData, classData, classPrefix);
+      classBtn.onclick = () => {
+        if (!classPrefix) return;
+        setActiveTab('class', allData, classData, classPrefix);
+      };
     }
 
     if (classPrefix) {
@@ -123,6 +138,9 @@ export async function submitScore(
   goldCount
 ) {
   try {
+    window.__leaderboardPlayerId = playerId;
+    localStorage.setItem('currentPlayerId', playerId || '');
+
     const res = await fetch(`${API_BASE}/leaderboard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

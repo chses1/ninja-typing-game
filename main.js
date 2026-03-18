@@ -655,6 +655,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.pauseCount = 0;
   gameState.consecutiveBossHealthIntactCount = 0;
   gameState.consecutiveNoErrorPracticeCount = 0;
+  const oldPracticeTimer = gameState.practiceTimer;
   gameState.practiceTimer = null;
   gameState.practiceEnd = null;
   gameState._remainingPractice = 0;
@@ -663,7 +664,9 @@ function resetGameState({ keepPlayerId = true } = {}) {
   localStorage.setItem('unlockedWords', JSON.stringify([]));
   localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
 
-  clearTimeout(gameState.practiceTimer);
+  if (oldPracticeTimer) {
+    clearTimeout(oldPracticeTimer);
+  }
 
   ['level-overlay','pause-overlay','vocab-overlay','ach-overlay','leaderboard-overlay']
     .forEach(id => {
@@ -676,9 +679,13 @@ function restartGameSamePlayer() {
   resetGameState({ keepPlayerId: true });
   gameoverBg.style.display = 'none';
   keyboardEl.style.display = 'flex';
-  initEntities();
-  initLevel(1);
-  spawnLoop(gameState);
+
+  const gameContainer = document.getElementById('game-container');
+  const loginOverlay = document.getElementById('login-overlay');
+  if (loginOverlay) loginOverlay.style.display = 'none';
+  if (gameContainer) gameContainer.style.display = 'block';
+
+  startGame();
 }
 
 function returnToLoginScreen() {
@@ -698,6 +705,8 @@ function returnToLoginScreen() {
     setTimeout(() => playerIdInput.focus(), 0);
   }
   if (errorEl) errorEl.textContent = '';
+  localStorage.removeItem('currentPlayerId');
+  window.__leaderboardPlayerId = '';
 }
 
 // 排行榜按鈕

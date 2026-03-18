@@ -322,6 +322,8 @@ if (!window.gameState || !window.gameState.player) {
 }
     // 1. 設定玩家編號
     window.gameState.player.id = id;
+    localStorage.setItem('currentPlayerId', id);
+    window.__leaderboardPlayerId = id;
 
     // 2. 清空上一位玩家的詞彙圖鑑與成就
     localStorage.setItem('unlockedWords', JSON.stringify([]));
