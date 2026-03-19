@@ -26,7 +26,7 @@ export const vocabulary = [
   { level:16, word: 'HAND',  length: 4, category: '身體生活（16-20關）', definition: '手',     partOfSpeech: 'n.',  example: 'Raise your hand.',            exampleZh: '舉起你的手。', image: 'img/hand.png' },
   { level:17, word: 'MILK',  length: 4, category: '身體生活（16-20關）', definition: '牛奶',   partOfSpeech: 'n.',  example: 'I drink milk every day.',     exampleZh: '我每天都喝牛奶。', image: 'img/milk.png' },
   { level:18, word: 'HOME',  length: 4, category: '身體生活（16-20關）', definition: '家',     partOfSpeech: 'n.',  example: 'Go home now.',                exampleZh: '現在回家吧。', image: 'img/home.png' },
-  { level:19, word: 'WALK',  length: 4, category: '身體生活（16-20關）', definition: '走路',   partOfSpeech: 'v.',  example: 'Let's walk to school.',      exampleZh: '我們走路去學校吧。', image: 'img/walk.png' },
+  { level:19, word: 'WALK',  length: 4, category: '身體生活（16-20關）', definition: '走路',   partOfSpeech: 'v.',  example: "Let's walk to school.",      exampleZh: '我們走路去學校吧。', image: 'img/walk.png' },
   { level:20, word: 'SING',  length: 4, category: '身體生活（16-20關）', definition: '唱歌',   partOfSpeech: 'v.',  example: 'She can sing well.',          exampleZh: '她很會唱歌。', image: 'img/sing.png' },
 
   // 21~30 關：維持可理解的分類
