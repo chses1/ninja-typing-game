@@ -46,7 +46,7 @@ const PAUSE_TIPS = [
   '💥 爆擊：連擊（Combo）越高，輸入越穩，分數累積越快！請盡量不要按錯字母。',
   '🎯 練習階段：打中標靶 +10 分。維持連擊可以更快累積高分與道具。',
   '🧿 分身符：Boss 手裡劍打到你時，如果你有分身符會優先消耗 1 張並免扣血。',
-  '🧪 補血道具：有補血數量時，點一下角色即可補血（每次回 30%）。',
+  '🧪 補血道具：現在會在血量危險時自動使用（每次回 30%）。',
   '🧠 Boss 攻略：先「攔截」第一枚手裡劍（打出同字母）→ 再依序輸入 Boss 單字攻擊弱點。',
   '📌 計分重點：穩定不失誤 > 亂按。保持連擊才能拿到更多道具與更高分。',
   '🔥 進階技巧：先練「看字母→立即按」的反射；Boss 戰時專心看第一枚手裡劍字母最重要。'
@@ -274,10 +274,17 @@ function showPauseMenu() {
 
 startPauseTips(); // ✅ 新增：開始輪播提示
 
-  if (window.gameState && window.gameState.practiceTimer) {
+  if (window.gameState) {
     window.gameState.paused = true;
-    window.gameState._remainingPractice = window.gameState.practiceEnd - Date.now();
-    clearTimeout(window.gameState.practiceTimer);
+
+    if (!window.gameState.bossActive && window.gameState.practiceTimer) {
+      window.gameState._remainingPractice = Math.max(
+        0,
+        window.gameState.practiceEnd - Date.now()
+      );
+      clearTimeout(window.gameState.practiceTimer);
+      window.gameState.practiceTimer = null;
+    }
   }
 }
 
@@ -288,8 +295,11 @@ function hidePauseMenu() {
   pauseOverlay.style.display = 'none';
 stopPauseTips(); // ✅ 新增：停止輪播提示
 
-  if (window.gameState && window.gameState._remainingPractice > 0) {
-    window.gameState.paused = false;
+  if (!window.gameState) return;
+
+  window.gameState.paused = false;
+
+  if (window.gameState._remainingPractice > 0 && !window.gameState.bossActive) {
     window.gameState.practiceTimer = setTimeout(
       window.gameState.startBoss,
       window.gameState._remainingPractice

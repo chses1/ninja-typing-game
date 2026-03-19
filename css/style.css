@@ -927,3 +927,132 @@ html, body {
   .vocab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .level-sub { font-size: clamp(16px, 4.2vw, 22px); }
 }
+
+
+/* ===== 2026-03-19 修正：iPad 圖鑑、排行榜對齊 ===== */
+#leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+#leaderboard-panel > h2 {
+  width: 100%;
+  text-align: center;
+  line-height: 1.15;
+  margin: 0 0 14px !important;
+}
+#leaderboard-tabs,
+#leaderboard-subtitle,
+#leaderboard-actions {
+  width: 100%;
+  text-align: center;
+}
+#leaderboard-tabs {
+  align-items: center;
+}
+#leaderboard-subtitle {
+  line-height: 1.35;
+}
+#leaderboard-panel table {
+  width: 100%;
+  table-layout: fixed;
+}
+#leaderboard-panel table th,
+#leaderboard-panel table td {
+  text-align: center;
+  vertical-align: middle;
+}
+#leaderboard-panel table th:first-child,
+#leaderboard-panel table td:first-child {
+  width: 90px;
+}
+#leaderboard-panel table th:nth-child(2),
+#leaderboard-panel table td:nth-child(2) {
+  width: 140px;
+}
+
+#vocab-overlay {
+  padding: 12px;
+}
+#vocab-overlay > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+#vocab-overlay > div h2 {
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+#vocab-ul {
+  flex: 1 1 auto;
+}
+#vocab-overlay-close-btn {
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+/* iPad 橫向版：縮小圖鑑卡片，確保 6 類可同頁觀看 */
+@media (min-width: 900px) and (max-width: 1400px) and (orientation: landscape) {
+  #vocab-overlay > div {
+    width: min(1180px, 95vw);
+    max-height: 88vh !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+  }
+
+  #vocab-overlay > div h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  #vocab-ul {
+    gap: 10px 12px;
+  }
+
+  .vocab-section-title {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    font-size: 16px;
+    border-left-width: 5px;
+    border-radius: 0 14px 14px 0;
+  }
+
+  .vocab-grid {
+    gap: 8px;
+  }
+
+  .vocab-cell {
+    min-height: 96px;
+    padding: 6px 4px;
+    border-radius: 12px;
+  }
+
+  .vocab-img,
+  .vocab-blank {
+    width: 42px;
+    height: 42px;
+  }
+
+  .vocab-word {
+    font-size: 0.8rem;
+    line-height: 1.15;
+  }
+
+  .vocab-cell > div:last-child {
+    font-size: 0.68rem !important;
+    line-height: 1.15;
+    margin-top: 2px !important;
+  }
+
+  #vocab-ul > div:last-child {
+    margin-top: 0 !important;
+    padding: 8px 10px !important;
+    font-size: 0.88rem;
+  }
+
+  #vocab-overlay-close-btn {
+    margin-top: 8px;
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+}

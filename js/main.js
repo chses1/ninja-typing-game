@@ -76,8 +76,8 @@ function ensureBossTutorialOverlay() {
 
 function showBossTutorialOnce() {
   ensureBossTutorialOverlay();
-  if (sessionStorage.getItem('bossTutorialShown') === 'yes') return false;
-  sessionStorage.setItem('bossTutorialShown', 'yes');
+  if (gameState.bossTutorialShown) return false;
+  gameState.bossTutorialShown = true;
   const el = document.getElementById('boss-tutorial-overlay');
   if (!el) return false;
   gameState.paused = true;
@@ -235,6 +235,7 @@ const gameState = {
     // ✅ 暫停成就用
   pauseUsed: false,
   pauseCount: 0,
+  bossTutorialShown: false,
 
   // ✅ 連續成就用（練習無失誤 / Boss 不掉血）
   consecutiveBossHealthIntactCount: 0,
@@ -459,6 +460,11 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
     return;
   }
+
+  if (gameState.health <= 60 && gameState.healthCount > 0) {
+    autoUseHealthIfNeeded();
+  }
+
   if (gameState.health <= 0 && !gameState.gameOver) {
     // 標記已進入遊戲結束，避免重複觸發
     gameState.gameOver = true;
@@ -577,6 +583,7 @@ gameState.items.forEach((it, idx) => {
     // 如果標靶碰到玩家，扣血並移除標靶
     if (collide(t, gameState.player)) {
       gameState.health -= 20;
+      autoUseHealthIfNeeded();
       gameState.targets.splice(i, 1);
       gameState.combo = 0;
       gameState.noErrorPractice = false;  // 練習階段發生失誤
@@ -678,7 +685,8 @@ gameState.items.forEach((it, idx) => {
       // （可在此播放閃避動畫／音效）
         } else {
           gameState.health -= 20;              // 無分身符，正常扣血
-          gameState.bossHealthIntact = false;  
+          gameState.bossHealthIntact = false;
+          autoUseHealthIfNeeded();
         }
           gameState.bossProjectiles.splice(i, 1);
       }
@@ -785,6 +793,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.gameOver = false;
   gameState.pauseUsed = false;
   gameState.pauseCount = 0;
+  gameState.bossTutorialShown = false;
   gameState.consecutiveBossHealthIntactCount = 0;
   gameState.consecutiveNoErrorPracticeCount = 0;
   const oldPracticeTimer = gameState.practiceTimer;
@@ -854,6 +863,19 @@ document.getElementById('leaderboard-close').onclick = () => {
   document.getElementById('leaderboard-overlay').style.display = 'none';
   returnToLoginScreen();
 };
+
+function autoUseHealthIfNeeded() {
+  const lowHealthThreshold = 60;
+  if (gameState.health > 0 && gameState.health <= lowHealthThreshold && gameState.healthCount > 0) {
+    gameState.healthCount -= 1;
+    gameState.health = Math.min(
+      MAX_HEALTH,
+      gameState.health + MAX_HEALTH * 0.3
+    );
+    return true;
+  }
+  return false;
+}
 
 // ↓ 在這裡貼上：點擊／觸控使用補血藥 ↓
 function tryUseHealth(x, y) {
