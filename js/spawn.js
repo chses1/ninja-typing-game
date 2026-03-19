@@ -59,11 +59,36 @@ export function spawnLoop(gameState) {
   function spawnKunai() {
     const avail = gameState.boss.word.split('');
     const letter = avail[Math.floor(Math.random() * avail.length)];
+    const size = 150;
+    const minY = gameState.boss.y + 8;
+    const maxY = gameState.boss.y + Math.max(8, gameState.boss.height - size - 8);
+    const minGap = size * 0.72;
+
+    let chosenY = minY;
+    let bestDistance = -1;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const candidateY = minY + Math.random() * Math.max(1, maxY - minY);
+      const nearestDistance = gameState.bossProjectiles.reduce((min, projectile) => {
+        return Math.min(min, Math.abs(candidateY - projectile.y));
+      }, Infinity);
+
+      if (nearestDistance >= minGap) {
+        chosenY = candidateY;
+        bestDistance = nearestDistance;
+        break;
+      }
+
+      if (nearestDistance > bestDistance) {
+        bestDistance = nearestDistance;
+        chosenY = candidateY;
+      }
+    }
+
     gameState.bossProjectiles.push({
-      x:      gameState.boss.x - 150,
-      y:      gameState.boss.y + Math.random() * (gameState.boss.height - 150),
-      width:  150,
-      height: 150,
+      x:      gameState.boss.x - size,
+      y:      chosenY,
+      width:  size,
+      height: size,
       speed:  getBossKunaiSpeed(gameState.currentLevel || 1),
       letter
     });

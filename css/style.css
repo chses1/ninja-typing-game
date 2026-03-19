@@ -1056,3 +1056,92 @@ html, body {
     padding: 6px 12px;
   }
 }
+
+
+/* ===== 2026-03-19 第二波：iPad 圖鑑更緊湊、關閉鍵固定、Boss 受擊特效 ===== */
+#game-canvas.boss-hit-flash {
+  filter: brightness(1.18) saturate(1.18);
+}
+
+#vocab-overlay {
+  padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)) 10px;
+}
+
+#vocab-overlay > div {
+  width: min(1180px, 95vw) !important;
+  max-height: min(90vh, 860px) !important;
+  overflow: auto !important;
+  scrollbar-gutter: stable;
+}
+
+#vocab-overlay-close-btn {
+  position: sticky;
+  bottom: 0;
+  align-self: center;
+  z-index: 2;
+  margin-top: 12px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #ffea00;
+  color: #222;
+  font-weight: 900;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+@media (min-width: 900px) and (max-width: 1400px) and (orientation: landscape) {
+  #vocab-overlay > div {
+    width: min(1100px, 94vw) !important;
+    max-height: 84vh !important;
+    padding: 14px !important;
+  }
+
+  #vocab-ul {
+    gap: 8px 10px !important;
+  }
+
+  .vocab-section-title {
+    padding: 6px 10px !important;
+    margin-bottom: 6px !important;
+    font-size: 15px !important;
+  }
+
+  .vocab-grid {
+    gap: 6px !important;
+  }
+
+  .vocab-cell {
+    min-height: 86px !important;
+    padding: 5px 3px 6px !important;
+  }
+
+  .vocab-img,
+  .vocab-blank {
+    width: 36px !important;
+    height: 36px !important;
+    margin-top: 2px !important;
+  }
+
+  .vocab-word {
+    font-size: 0.72rem !important;
+    line-height: 1.05 !important;
+    margin-top: 1px !important;
+  }
+
+  .vocab-cell > div:last-child {
+    font-size: 0.58rem !important;
+    line-height: 1.05 !important;
+    margin-top: 1px !important;
+  }
+
+  #vocab-ul > div:last-child {
+    padding: 6px 8px !important;
+    font-size: 0.76rem !important;
+  }
+
+  #vocab-overlay-close-btn {
+    margin-top: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}

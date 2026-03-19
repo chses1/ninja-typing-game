@@ -117,6 +117,29 @@ function showUnlockToast(entry) {
   showUnlockToast._timer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+
+function showItemGainToast(type, count) {
+  const label = type === 'health' ? '補血符' : '分身符';
+  gameState.itemGainToast = {
+    type,
+    count,
+    label,
+    until: Date.now() + 1500
+  };
+}
+
+function addBossHitEffect(x, y) {
+  if (!Array.isArray(gameState.bossHitEffects)) gameState.bossHitEffects = [];
+  gameState.bossHitEffects.push({
+    x,
+    y,
+    radius: 18,
+    alpha: 1,
+    life: 16,
+    maxLife: 16
+  });
+}
+
 function getStageTitle(level) {
   const entry = vocabulary.find(v => v.level === level);
   return entry?.category || `第 ${level} 關`;
@@ -229,6 +252,8 @@ const gameState = {
   healthCount: 0,
   items:         [],
   bossDefeatedCount: 0, // 打倒boss數
+  bossHitEffects: [],
+  itemGainToast: null,
   unlockedWords: JSON.parse(localStorage.getItem('unlockedWords') || '[]'),
   noErrorPractice: false,    // 練習階段 30 秒內是否無失誤
   gameOver: false,            // ← 新增：遊戲是否已結束
@@ -612,9 +637,12 @@ gameState.items.forEach((it, idx) => {
         
       // c) 撞到頭目本體（只有攻擊飛鏢才會傷害 boss）
       if (gameState.bossActive && p.weakIndex !== undefined && collide(p, gameState.boss)) {
+        const hitX = p.x + p.width * 0.5;
+        const hitY = p.y + p.height * 0.5;
         gameState.playerProjectiles.splice(pi, 1);
         gameState.boss.hp--;
         gameState.boss.hitSlots[p.weakIndex] = true;
+        addBossHitEffect(hitX, hitY);
         if (gameState.onBossHealthChange) gameState.onBossHealthChange();
         canvas.classList.add('boss-hit-flash');
         setTimeout(() => canvas.classList.remove('boss-hit-flash'), 120);
@@ -671,28 +699,101 @@ gameState.items.forEach((it, idx) => {
     gameState.bossProjectiles.forEach((b,i)=>{
       b.x -= b.speed;
       ctx.drawImage(kunaiImg, b.x, b.y, b.width, b.height);
-      // 手裡劍字母
-      const fz = Math.floor(b.height * 0.8);
-      ctx.fillStyle = 'white';
-      ctx.font      = `bold ${fz}px sans-serif`;
-      ctx.textAlign = 'left';
+
+      const fontSize = Math.floor(Math.min(48, b.height * 0.5));
+      const textX = b.x + b.width + 16;
+      const textY = b.y + b.height / 2;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(textX - 12, textY - 28, 56, 56, 12);
+      } else {
+        ctx.rect(textX - 12, textY - 28, 56, 56);
+      }
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font      = `900 ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(b.letter, b.x + b.width + 10, b.y + b.height/2);
-      // 撞玩家
+      ctx.fillText(b.letter, textX + 16, textY + 1);
+      ctx.restore();
+
       if (collide(b, gameState.player)) {
         if (gameState.decoyCount > 0) {
-          gameState.decoyCount -= 1;           // 有分身符，消耗即可
-      // （可在此播放閃避動畫／音效）
+          gameState.decoyCount -= 1;
         } else {
-          gameState.health -= 20;              // 無分身符，正常扣血
+          gameState.health -= 20;
           gameState.bossHealthIntact = false;
           autoUseHealthIfNeeded();
         }
-          gameState.bossProjectiles.splice(i, 1);
+        gameState.bossProjectiles.splice(i, 1);
       }
 
     });
   }
+
+  // 3-1. Boss 受擊特效
+  if (Array.isArray(gameState.bossHitEffects) && gameState.bossHitEffects.length) {
+    gameState.bossHitEffects = gameState.bossHitEffects.filter((fx) => fx.life > 0 && fx.alpha > 0.02);
+    gameState.bossHitEffects.forEach((fx) => {
+      const progress = 1 - fx.life / fx.maxLife;
+      const radius = fx.radius + progress * 46;
+
+      ctx.save();
+      ctx.globalAlpha = fx.alpha;
+      ctx.strokeStyle = '#ffea00';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 / 6) * i + progress * 0.45;
+        const sparkX = fx.x + Math.cos(angle) * (radius * 0.45);
+        const sparkY = fx.y + Math.sin(angle) * (radius * 0.45);
+        ctx.beginPath();
+        ctx.arc(sparkX, sparkY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      fx.life -= 1;
+      fx.alpha *= 0.88;
+    });
+  }
+
+  // 3-2. 連擊獲得道具提示
+  if (gameState.itemGainToast && gameState.itemGainToast.until > Date.now()) {
+    const toast = gameState.itemGainToast;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.35, (toast.until - Date.now()) / 1500);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+    const boxW = Math.min(360, canvas.width * 0.7);
+    const boxH = 92;
+    const boxX = (canvas.width - boxW) / 2;
+    const boxY = canvas.height * 0.18;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, 18);
+      ctx.fill();
+    } else {
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+    }
+    ctx.fillStyle = '#ffea00';
+    ctx.font = '900 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('道具獲得！', canvas.width / 2, boxY + 28);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 30px sans-serif';
+    ctx.fillText(`${toast.label} × ${toast.count}`, canvas.width / 2, boxY + 62);
+    ctx.restore();
+  } else if (gameState.itemGainToast && gameState.itemGainToast.until <= Date.now()) {
+    gameState.itemGainToast = null;
+  }
+
 
   // 4. 玩家繪製（固定大小）
   const P   = gameState.player;
@@ -722,6 +823,7 @@ export function startGame() {
   gameState.currentLevel = 1;
   initLevel(1);
   gameState.showBossTutorialOnce = showBossTutorialOnce;
+  gameState.showItemGainToast = showItemGainToast;
   spawnLoop(gameState);
   renderUI(gameState);
   requestAnimationFrame(gameLoop);
@@ -787,6 +889,8 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.healthCount = 0;
   gameState.items = [];
   gameState.bossDefeatedCount = 0;
+  gameState.bossHitEffects = [];
+  gameState.itemGainToast = null;
   gameState.unlockedWords = [];
   gameState.achievementsUnlocked = [];
   gameState.noErrorPractice = true;

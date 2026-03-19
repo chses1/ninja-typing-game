@@ -116,10 +116,16 @@ export function setupInput(gameState) {
           if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
           // ↓ 在 combo++ 後貼上：累積道具邏輯 ↓
           if (gameState.combo % 20 === 0 && gameState.decoyCount < 5) {
-          gameState.decoyCount += 1;
+            gameState.decoyCount += 1;
+            if (typeof gameState.showItemGainToast === 'function') {
+              gameState.showItemGainToast('decoy', gameState.decoyCount);
+            }
           }
           if (gameState.combo % 30 === 0 && gameState.healthCount < 5) {
-          gameState.healthCount += 1;
+            gameState.healthCount += 1;
+            if (typeof gameState.showItemGainToast === 'function') {
+              gameState.showItemGainToast('health', gameState.healthCount);
+            }
           }
           // 顯示 Combo 動畫
           animateCombo(gameState.combo);
