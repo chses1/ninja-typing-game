@@ -43,9 +43,6 @@ let pauseTipTimer = null;
 let pauseTipIndex = 0;
 
 const PAUSE_TIPS = [
-  '先打飛來的字母，再照順序打 Boss 單字！',
-  '打得準，比亂按更厲害！',
-
   '💥 爆擊：連擊（Combo）越高，輸入越穩，分數累積越快！請盡量不要按錯字母。',
   '🎯 練習階段：打中標靶 +10 分。維持連擊可以更快累積高分與道具。',
   '🧿 分身符：Boss 手裡劍打到你時，如果你有分身符會優先消耗 1 張並免扣血。',
@@ -90,6 +87,30 @@ function stopPauseTips() {
 export function setupInput(gameState) {
   let isUpper = true;
 
+  function flashKey(letter, ok) {
+    const btn = document.querySelector(`.vk-key[data-key="${letter.toUpperCase()}"]`);
+    if (!btn) return;
+    btn.classList.remove('key-correct', 'key-wrong');
+    void btn.offsetWidth;
+    btn.classList.add(ok ? 'key-correct' : 'key-wrong');
+    setTimeout(() => btn.classList.remove('key-correct', 'key-wrong'), 220);
+  }
+
+  function showMidMessage(text, type = 'good') {
+    let el = document.getElementById('mid-message');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'mid-message';
+      document.body.appendChild(el);
+    }
+    el.className = `mid-message show ${type}`;
+    el.textContent = text;
+    clearTimeout(showMidMessage._timer);
+    showMidMessage._timer = setTimeout(() => {
+      el.classList.remove('show');
+    }, 900);
+  }
+
   // 處理所有鍵入
   function handleKey(raw) {
     const L = raw.toUpperCase();
@@ -100,7 +121,10 @@ export function setupInput(gameState) {
       if (T) {
         if (T.letter === L) {
           // 正確輸入
+          flashKey(L, true);
           T.hit = true;
+          T.justHit = true;
+          showMidMessage('好球！', 'good');
           gameState.hitCount++; // 更新命中次數
           // Combo 增加
           gameState.combo++;
@@ -129,6 +153,8 @@ export function setupInput(gameState) {
           }
         } else {
           // 錯誤輸入，中斷連擊
+          flashKey(L, false);
+          showMidMessage('再試一次！', 'warn');
           gameState.combo = 0;
           gameState.noErrorPractice = false; // 標記練習階段失誤
         }
@@ -143,6 +169,8 @@ if (gameState.bossActive) {
   if (firstKunai && !firstKunai.hit) {
     console.log('[Deflect] 按下', L, '手裡劍字母是', firstKunai.letter);
     if (L === firstKunai.letter) {
+      flashKey(L, true);
+      showMidMessage('擋得漂亮！', 'good');
       firstKunai.hit = true;
       console.log('[Deflect] 已移除手裡劍並推送反彈飛鏢');
       // 立即移除已 deflect 的手裡劍
@@ -161,6 +189,8 @@ if (gameState.bossActive) {
   const word     = gameState.boss.word;
   const progress = gameState.bossInputProgress || 0;
   if (progress < word.length && L === word[progress]) {
+    flashKey(L, true);
+    showMidMessage('命中弱點！', 'good');
     gameState.playerProjectiles.push({
       x: gameState.player.x + gameState.player.width,
       y: (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
@@ -174,7 +204,8 @@ if (gameState.bossActive) {
     return;  // 成功攻擊弱點時中斷
   }
   
-  // Optional：若要讓「按錯字母」也有回饋，可以在這裡加個 else 來重置 combo、或做其他處理
+  flashKey(L, false);
+  showMidMessage('看準再按！', 'warn');
   return;
 }
   }
