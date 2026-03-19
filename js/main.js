@@ -130,6 +130,81 @@ function showItemGainToast(type, count) {
   };
 }
 
+function pauseGameForModal() {
+  gameState.paused = true;
+
+  if (!gameState.bossActive && gameState.practiceTimer) {
+    gameState._remainingPractice = Math.max(0, (gameState.practiceEnd || Date.now()) - Date.now());
+    clearTimeout(gameState.practiceTimer);
+    gameState.practiceTimer = null;
+  }
+}
+
+function resumeGameFromModal() {
+  gameState.paused = false;
+
+  if (gameState._remainingPractice > 0 && !gameState.bossActive && !gameState.gameOver) {
+    gameState.practiceTimer = setTimeout(gameState.startBoss, gameState._remainingPractice);
+    gameState.practiceEnd = Date.now() + gameState._remainingPractice;
+    gameState._remainingPractice = 0;
+  }
+}
+
+function ensureEndConfirmOverlay() {
+  if (document.getElementById('end-confirm-overlay')) return document.getElementById('end-confirm-overlay');
+  const overlay = document.createElement('div');
+  overlay.id = 'end-confirm-overlay';
+  overlay.innerHTML = `
+    <div class="end-confirm-box">
+      <div class="end-confirm-title">確認結束遊戲？</div>
+      <div class="end-confirm-text">
+        結束後會立即停止目前這場遊戲，並顯示排行榜。
+      </div>
+      <div class="end-confirm-actions">
+        <button id="end-confirm-cancel" class="end-confirm-btn cancel">返回遊戲</button>
+        <button id="end-confirm-ok" class="end-confirm-btn ok">確認結束</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#end-confirm-cancel').onclick = () => {
+    overlay.classList.remove('show');
+    gameState.endConfirmOpen = false;
+    resumeGameFromModal();
+  };
+
+  overlay.querySelector('#end-confirm-ok').onclick = () => {
+    overlay.classList.remove('show');
+    gameState.endConfirmOpen = false;
+    finalizeEndGame();
+  };
+
+  return overlay;
+}
+
+export function openEndConfirm() {
+  if (gameState.gameOver || gameState.endConfirmOpen) return;
+  const overlay = ensureEndConfirmOverlay();
+  pauseGameForModal();
+  gameState.endConfirmOpen = true;
+  overlay.classList.add('show');
+}
+
+function finalizeEndGame() {
+  gameState.endConfirmOpen = false;
+  gameState.paused = true;
+  gameState.health = 0;
+  gameState.practiceEnd = null;
+  gameState._remainingPractice = 0;
+  if (gameState.practiceTimer) {
+    clearTimeout(gameState.practiceTimer);
+    gameState.practiceTimer = null;
+  }
+  const bossTutorial = document.getElementById('boss-tutorial-overlay');
+  if (bossTutorial) bossTutorial.classList.remove('show');
+}
+
 function triggerBossHitFlash() {
   gameState.bossFlashUntil = Date.now() + 180;
   canvas.classList.remove('boss-hit-flash');
@@ -297,6 +372,7 @@ const gameState = {
   pauseUsed: false,
   pauseCount: 0,
   bossTutorialShown: false,
+  endConfirmOpen: false,
 
   // ✅ 連續成就用（練習無失誤 / Boss 不掉血）
   consecutiveBossHealthIntactCount: 0,
@@ -1043,6 +1119,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.pauseUsed = false;
   gameState.pauseCount = 0;
   gameState.bossTutorialShown = false;
+  gameState.endConfirmOpen = false;
   gameState.consecutiveBossHealthIntactCount = 0;
   gameState.consecutiveNoErrorPracticeCount = 0;
   const oldPracticeTimer = gameState.practiceTimer;
@@ -1058,10 +1135,13 @@ function resetGameState({ keepPlayerId = true } = {}) {
     clearTimeout(oldPracticeTimer);
   }
 
-  ['level-overlay','pause-overlay','vocab-overlay','ach-overlay','leaderboard-overlay']
+  ['level-overlay','pause-overlay','vocab-overlay','ach-overlay','leaderboard-overlay','end-confirm-overlay']
     .forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
+      if (el) {
+        el.style.display = 'none';
+        el.classList.remove('show');
+      }
     });
 }
 

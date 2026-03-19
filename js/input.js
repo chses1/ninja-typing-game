@@ -1,6 +1,6 @@
 // js/input.js
 
-import { showLevelOverlay, checkAchievements } from './main.js';
+import { showLevelOverlay, checkAchievements, openEndConfirm } from './main.js';
 import { animateCombo } from './ui.js';
 
 // 延遲在 DOMContentLoaded 再抓取 Overlay 元素
@@ -222,11 +222,9 @@ if (gameState.bossActive) {
     }
     if (key === 'Pause') { showPauseMenu(); return; }
     if (key === 'End') {
-    // 一、先關掉暫停選單
-    hidePauseMenu();
-    // 二、標記血量歸零→下一幀 gameLoop 會上傳分數並顯示排行榜
-    gameState.health = 0;
-    return;
+      hidePauseMenu();
+      openEndConfirm();
+      return;
     }
     handleKey(isUpper ? key : key.toLowerCase());
   });
@@ -275,6 +273,7 @@ if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEdit
 function showPauseMenu() {
   if (!pauseOverlay) pauseOverlay = document.getElementById('pause-overlay');
   if (!pauseOverlay) return;
+  if (window.gameState?.gameOver || window.gameState?.endConfirmOpen) return;
 
   pauseOverlay.style.display = 'flex';
     // ✅ 暫停成就：第一次暫停 + 暫停次數累計

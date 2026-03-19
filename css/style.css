@@ -1307,3 +1307,61 @@ html, body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+
+#end-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.82);
+  z-index: 4700;
+}
+#end-confirm-overlay.show {
+  display: flex;
+}
+.end-confirm-box {
+  width: min(560px, 90vw);
+  background: linear-gradient(180deg, #2b2b2b, #171717);
+  border: 3px solid #ffea00;
+  border-radius: 22px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.45);
+  padding: 24px;
+  text-align: center;
+  color: #fff;
+}
+.end-confirm-title {
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 900;
+  color: #ffea00;
+  margin-bottom: 10px;
+}
+.end-confirm-text {
+  font-size: clamp(16px, 2.4vw, 22px);
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+.end-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.end-confirm-btn {
+  min-width: 180px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 12px;
+  font-size: clamp(18px, 2.6vw, 24px);
+  font-weight: 800;
+  cursor: pointer;
+}
+.end-confirm-btn.cancel {
+  background: #666;
+  color: #fff;
+}
+.end-confirm-btn.ok {
+  background: #ffea00;
+  color: #222;
+}
