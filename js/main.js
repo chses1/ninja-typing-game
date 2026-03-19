@@ -130,6 +130,18 @@ function getLevelTheme(level) {
   return '終極忍者挑戰';
 }
 
+
+function getVocabularyThemeRows() {
+  return [
+    { title: '動物主題（1-3 關）', range: [0, 3] },
+    { title: '校園用品（4-6 關）', range: [3, 6] },
+    { title: '居家道具（7-8 關）', range: [6, 8] },
+    { title: '動作練習（9-10 關）', range: [8, 10] },
+    { title: '地球防衛戰（11-20 關）', range: [10, 20] },
+    { title: '終極挑戰（21-30 關）', range: [20, 30] },
+  ];
+}
+
 function getLevelClearTitle(gs) {
   const combo = gs.maxCombo || 0;
   const hp = gs.health || 0;
@@ -138,6 +150,95 @@ function getLevelClearTitle(gs) {
   if (combo >= 8) return '連擊高手！';
   if (hp >= 80) return '穩定高手！';
   return '勇敢學徒！';
+}
+
+
+function getPlayerProgressKey(playerId) {
+  return `playerProgress_${playerId || 'guest'}`;
+}
+
+function loadPlayerProgress(playerId) {
+  try {
+    return {
+      bestScore: 0,
+      bestLevel: 0,
+      bestCombo: 0,
+      bestWords: 0,
+      plays: 0,
+      ...JSON.parse(localStorage.getItem(getPlayerProgressKey(playerId)) || '{}')
+    };
+  } catch {
+    return { bestScore: 0, bestLevel: 0, bestCombo: 0, bestWords: 0, plays: 0 };
+  }
+}
+
+function savePlayerProgress(playerId, progress) {
+  localStorage.setItem(getPlayerProgressKey(playerId), JSON.stringify(progress));
+}
+
+function getProgressMessages(gs, previousProgress) {
+  const messages = [];
+  if ((gs.score || 0) > (previousProgress.bestScore || 0)) {
+    const delta = (gs.score || 0) - (previousProgress.bestScore || 0);
+    messages.push(`🎯 分數新紀錄！+${delta} 分`);
+  }
+  if ((gs.currentLevel || 0) > (previousProgress.bestLevel || 0)) {
+    messages.push(`🚀 闖關新紀錄！已到第 ${gs.currentLevel} 關`);
+  }
+  if ((gs.maxCombo || 0) > (previousProgress.bestCombo || 0)) {
+    messages.push(`⚡ 連擊新紀錄！最高 ${gs.maxCombo} 連擊`);
+  }
+  if ((gs.unlockedWords?.length || 0) > (previousProgress.bestWords || 0)) {
+    messages.push(`📘 圖鑑進步了！已解鎖 ${gs.unlockedWords.length} 個單字`);
+  }
+  if (!messages.length) {
+    messages.push('💪 這次沒有刷新紀錄，但你離新紀錄更近了！');
+  }
+  return messages;
+}
+
+function updatePlayerProgress(gs) {
+  const previous = loadPlayerProgress(gs.player?.id);
+  const next = {
+    bestScore: Math.max(previous.bestScore || 0, gs.score || 0),
+    bestLevel: Math.max(previous.bestLevel || 0, gs.currentLevel || 0),
+    bestCombo: Math.max(previous.bestCombo || 0, gs.maxCombo || 0),
+    bestWords: Math.max(previous.bestWords || 0, gs.unlockedWords?.length || 0),
+    plays: (previous.plays || 0) + 1,
+  };
+  savePlayerProgress(gs.player?.id, next);
+  return { previous, next };
+}
+
+function showWordUnlockToast(entry, unlockedCount) {
+  if (!entry) return;
+
+  let toast = document.getElementById('word-unlock-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'word-unlock-toast';
+    toast.className = 'word-unlock-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <div class="word-unlock-inner">
+      <div class="word-unlock-title">🎉 新解鎖單字！</div>
+      <img src="${entry.image}" alt="${entry.word}" class="word-unlock-img">
+      <div class="word-unlock-word">${entry.word}</div>
+      <div class="word-unlock-def">${entry.definition}</div>
+      <div class="word-unlock-count">圖鑑進度：${unlockedCount}/30</div>
+    </div>
+  `;
+
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  clearTimeout(window.__wordUnlockToastTimer);
+  window.__wordUnlockToastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2600);
 }
 
 function ensureBossTutorialOverlay() {
@@ -816,24 +917,37 @@ export function showLevelOverlay() {
   const statsEl = document.getElementById('level-clear-stats');
 
   const entry = vocabulary.find(v => v.level === gameState.currentLevel);
+  let newlyUnlockedEntry = null;
   if (entry && !gameState.unlockedWords.includes(entry.word)) {
     gameState.unlockedWords.push(entry.word);
     localStorage.setItem('unlockedWords', JSON.stringify(gameState.unlockedWords));
+    newlyUnlockedEntry = entry;
   }
+
+  const { previous } = updatePlayerProgress(gameState);
+  const progressMessages = getProgressMessages(gameState, previous);
 
   const clearTitle = getLevelClearTitle(gameState);
   const theme = getLevelTheme(gameState.currentLevel);
   if (badgeEl) badgeEl.textContent = clearTitle;
   if (statsEl && entry) {
     statsEl.innerHTML = `
-      <div>本關主題：${theme}</div>
-      <div>本關單字：${entry.word}（${entry.definition}）</div>
-      <div>最佳連擊：${gameState.maxCombo}</div>
+      <div class="clear-stat-line"><b>本關主題：</b>${theme}</div>
+      <div class="clear-stat-line"><b>本關單字：</b>${entry.word}（${entry.definition}）</div>
+      <div class="clear-stat-line"><b>最佳連擊：</b>${gameState.maxCombo}</div>
+      ${newlyUnlockedEntry ? `<div class="clear-unlock-line">📖 新解鎖：${entry.word} 已加入圖鑑！</div>` : ''}
+      <div class="clear-progress-box">
+        <div class="clear-progress-title">這次的成長紀錄</div>
+        ${progressMessages.map(msg => `<div class="clear-progress-line">${msg}</div>`).join('')}
+      </div>
     `;
   }
 
   ov.style.display = 'flex';
   txt.textContent  = `🎉 恭喜通過第 ${gameState.currentLevel} 關！`;
+  if (newlyUnlockedEntry) {
+    setTimeout(() => showWordUnlockToast(newlyUnlockedEntry, gameState.unlockedWords.length), 120);
+  }
 
   btn.onclick = () => {
     ov.style.display       = 'none';
@@ -849,10 +963,7 @@ gameState.bossDefeatedCount++;
 document.getElementById('vocab-btn').onclick = function() {
   const unlocked = gameState.unlockedWords || [];
 
-  // 切割為三組
-  const col1 = vocabulary.slice(0, 10);
-  const col2 = vocabulary.slice(10, 20);
-  const col3 = vocabulary.slice(20, 30);
+  const themeRows = getVocabularyThemeRows();
 
   function renderCol(col) {
     return `
@@ -860,10 +971,10 @@ document.getElementById('vocab-btn').onclick = function() {
         ${col.map(v => {
           const got = unlocked.includes(v.word);
           return `
-            <div class="vocab-cell" style="opacity:${got ? '1' : '0.5'};filter:${got ? 'none' : 'grayscale(1)'};">
+            <div class="vocab-cell ${got ? 'is-unlocked' : 'is-locked'}" style="opacity:${got ? '1' : '0.5'};filter:${got ? 'none' : 'grayscale(1)'};">
               ${got
-                ? `<img src="${v.image}" alt="${v.word}" class="vocab-img"><div class="vocab-word">${v.word}</div>`
-                : `<div class="vocab-blank">?</div><div class="vocab-word">???</div>`
+                ? `<img src="${v.image}" alt="${v.word}" class="vocab-img"><div class="vocab-word">${v.word}</div><div class="vocab-mini-zh">${v.definition}</div>`
+                : `<div class="vocab-blank">?</div><div class="vocab-word">???</div><div class="vocab-mini-zh">尚未解鎖</div>`
               }
             </div>
           `;
@@ -874,9 +985,15 @@ document.getElementById('vocab-btn').onclick = function() {
 
   // 組合整個 HTML
   const html = `
-    <div class="vocab-row">${renderCol(col1)}</div>
-    <div class="vocab-row">${renderCol(col2)}</div>
-    <div class="vocab-row">${renderCol(col3)}</div>
+    ${themeRows.map(({ title, range }) => {
+      const col = vocabulary.slice(range[0], range[1]);
+      return `
+        <div class="vocab-theme-block">
+          <div class="vocab-theme-title">${title}</div>
+          <div class="vocab-row">${renderCol(col)}</div>
+        </div>
+      `;
+    }).join('')}
     <div style="margin-top:12px;padding:12px;background:#222;border-radius:10px;">
       <b>小提示：</b>點選已解鎖的單字可顯示詳細資訊！
     </div>

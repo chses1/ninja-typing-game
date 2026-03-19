@@ -868,3 +868,141 @@ html, body {
   font-weight: 900;
   cursor: pointer;
 }
+
+
+/* 第2步：圖鑑主題感、進步提示、解鎖感 */
+.clear-stat-line {
+  margin: 6px 0;
+}
+
+.clear-unlock-line {
+  margin-top: 10px;
+  color: #ffea00;
+  font-weight: bold;
+}
+
+.clear-progress-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(20, 30, 50, 0.7);
+  border: 1px solid rgba(255, 234, 0, 0.35);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.clear-progress-title {
+  color: #ffea00;
+  font-size: 1.05em;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.clear-progress-line {
+  margin: 6px 0;
+  color: #fff;
+}
+
+.word-unlock-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 4200;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-16px) scale(0.96);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.word-unlock-toast.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.word-unlock-inner {
+  min-width: 220px;
+  max-width: min(320px, 86vw);
+  background: linear-gradient(180deg, rgba(38,45,78,0.96), rgba(20,25,45,0.96));
+  border: 2px solid #ffea00;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  padding: 14px;
+  text-align: center;
+  color: #fff;
+}
+
+.word-unlock-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffea00;
+  margin-bottom: 8px;
+}
+
+.word-unlock-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.word-unlock-word {
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.word-unlock-def {
+  font-size: 18px;
+  color: #ffd977;
+  margin-top: 4px;
+}
+
+.word-unlock-count {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #d7f0ff;
+}
+
+.vocab-theme-block {
+  margin-bottom: 18px;
+}
+
+.vocab-theme-title {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(255,234,0,0.18), rgba(255,153,0,0.18));
+  border-left: 5px solid #ffea00;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #fff3a3;
+}
+
+.vocab-cell.is-unlocked {
+  box-shadow: 0 0 0 1px rgba(255,234,0,0.15);
+}
+
+.vocab-mini-zh {
+  font-size: 0.72em;
+  color: #d6d6d6;
+  margin-top: 2px;
+  text-align: center;
+  padding: 0 2px 4px;
+}
+
+@media (max-width: 768px) {
+  .word-unlock-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .word-unlock-inner {
+    max-width: none;
+  }
+
+  .vocab-theme-title {
+    font-size: 1em;
+  }
+}
