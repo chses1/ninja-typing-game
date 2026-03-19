@@ -144,10 +144,31 @@ function addBossHitEffect(x, y) {
   gameState.bossHitEffects.push({
     x,
     y,
-    radius: 18,
+    radius: 24,
     alpha: 1,
-    life: 16,
-    maxLife: 16
+    life: 22,
+    maxLife: 22
+  });
+}
+
+function triggerPlayerHitFlash() {
+  gameState.playerFlashUntil = Date.now() + 240;
+  canvas.classList.remove('player-hit-flash');
+  void canvas.offsetWidth;
+  canvas.classList.add('player-hit-flash');
+  clearTimeout(triggerPlayerHitFlash._timer);
+  triggerPlayerHitFlash._timer = setTimeout(() => canvas.classList.remove('player-hit-flash'), 240);
+}
+
+function addPlayerHitEffect(x, y) {
+  if (!Array.isArray(gameState.playerHitEffects)) gameState.playerHitEffects = [];
+  gameState.playerHitEffects.push({
+    x,
+    y,
+    radius: 16,
+    alpha: 1,
+    life: 18,
+    maxLife: 18
   });
 }
 
@@ -264,8 +285,11 @@ const gameState = {
   items:         [],
   bossDefeatedCount: 0, // 打倒boss數
   bossHitEffects: [],
+  playerHitEffects: [],
   itemGainToast: null,
   bossFlashUntil: 0,
+  playerFlashUntil: 0,
+  overlayReturnTarget: 'pause',
   unlockedWords: JSON.parse(localStorage.getItem('unlockedWords') || '[]'),
   noErrorPractice: false,    // 練習階段 30 秒內是否無失誤
   gameOver: false,            // ← 新增：遊戲是否已結束
@@ -616,6 +640,8 @@ gameState.items.forEach((it, idx) => {
     // 如果標靶碰到玩家，扣血並移除標靶
     if (collide(t, gameState.player)) {
       gameState.health -= 20;
+      addPlayerHitEffect(gameState.player.x + gameState.player.baseWidth * 0.5, gameState.player.y + gameState.player.baseHeight * 0.5);
+      triggerPlayerHitFlash();
       autoUseHealthIfNeeded();
       gameState.targets.splice(i, 1);
       gameState.combo = 0;
@@ -750,6 +776,8 @@ gameState.items.forEach((it, idx) => {
         } else {
           gameState.health -= 20;
           gameState.bossHealthIntact = false;
+          addPlayerHitEffect(gameState.player.x + gameState.player.baseWidth * 0.5, gameState.player.y + gameState.player.baseHeight * 0.5);
+          triggerPlayerHitFlash();
           autoUseHealthIfNeeded();
         }
         gameState.bossProjectiles.splice(i, 1);
@@ -763,29 +791,67 @@ gameState.items.forEach((it, idx) => {
     gameState.bossHitEffects = gameState.bossHitEffects.filter((fx) => fx.life > 0 && fx.alpha > 0.02);
     gameState.bossHitEffects.forEach((fx) => {
       const progress = 1 - fx.life / fx.maxLife;
-      const radius = fx.radius + progress * 46;
+      const radius = fx.radius + progress * 56;
 
       ctx.save();
       ctx.globalAlpha = fx.alpha;
-      ctx.strokeStyle = '#ffea00';
-      ctx.lineWidth = 6;
+      const grad = ctx.createRadialGradient(fx.x, fx.y, 2, fx.x, fx.y, radius);
+      grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+      grad.addColorStop(0.35, 'rgba(255,234,0,0.85)');
+      grad.addColorStop(1, 'rgba(255,140,0,0)');
+      ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#fff6a8';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, radius * 0.72, 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI * 2 / 6) * i + progress * 0.45;
-        const sparkX = fx.x + Math.cos(angle) * (radius * 0.45);
-        const sparkY = fx.y + Math.sin(angle) * (radius * 0.45);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 / 8) * i + progress * 0.5;
+        const sparkX = fx.x + Math.cos(angle) * (radius * 0.6);
+        const sparkY = fx.y + Math.sin(angle) * (radius * 0.6);
         ctx.beginPath();
-        ctx.arc(sparkX, sparkY, 4, 0, Math.PI * 2);
+        ctx.arc(sparkX, sparkY, 5, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
       fx.life -= 1;
-      fx.alpha *= 0.88;
+      fx.alpha *= 0.9;
+    });
+  }
+
+  if (Array.isArray(gameState.playerHitEffects) && gameState.playerHitEffects.length) {
+    gameState.playerHitEffects = gameState.playerHitEffects.filter((fx) => fx.life > 0 && fx.alpha > 0.02);
+    gameState.playerHitEffects.forEach((fx) => {
+      const progress = 1 - fx.life / fx.maxLife;
+      const radius = fx.radius + progress * 42;
+
+      ctx.save();
+      ctx.globalAlpha = fx.alpha;
+      const grad = ctx.createRadialGradient(fx.x, fx.y, 2, fx.x, fx.y, radius);
+      grad.addColorStop(0, 'rgba(255,255,255,0.92)');
+      grad.addColorStop(0.28, 'rgba(255,120,120,0.82)');
+      grad.addColorStop(1, 'rgba(255,40,40,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 180, 180, 0.95)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, radius * 0.68, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      fx.life -= 1;
+      fx.alpha *= 0.89;
     });
   }
 
@@ -820,7 +886,7 @@ gameState.items.forEach((it, idx) => {
     ctx.font = '900 30px sans-serif';
     ctx.fillText(`${toast.label}`, canvas.width / 2 + 10, boxY + 62);
     ctx.font = '900 18px sans-serif';
-    const subText = toast.type === 'decoy' ? `分身護盾：${Math.min(toast.count, 2)}/2` : (toast.type === 'health-auto' ? '血量歸零時已自動發動' : `剩餘補血符：${toast.count}`);
+    const subText = toast.type === 'decoy' ? `分身護盾：${Math.min(toast.count, 2)}/2` : (toast.type === 'health-auto' ? '血量歸零，直接補滿血量' : `剩餘補血藥：${toast.count}/2`);
     ctx.fillText(subText, canvas.width / 2 + 10, boxY + 90);
     ctx.restore();
   } else if (gameState.itemGainToast && gameState.itemGainToast.until <= Date.now()) {
@@ -859,7 +925,23 @@ gameState.items.forEach((it, idx) => {
   if (lvl <= 10)      imgToDraw = playerImg0;
   else if (lvl <= 20) imgToDraw = playerImgMid;
   else                imgToDraw = playerImg1;
+  const playerFlashing = gameState.playerFlashUntil && gameState.playerFlashUntil > Date.now();
+  if (playerFlashing) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 120, 120, 0.95)';
+    ctx.shadowBlur = 28;
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(imgToDraw, P.x - 2, P.y - 2, P.baseWidth + 4, P.baseHeight + 4);
+    ctx.restore();
+  }
   ctx.drawImage(imgToDraw, P.x, P.y, P.baseWidth, P.baseHeight);
+  if (playerFlashing) {
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = '#ff8a8a';
+    ctx.fillRect(P.x, P.y, P.baseWidth, P.baseHeight);
+    ctx.restore();
+  }
 
   requestAnimationFrame(gameLoop);
 }
@@ -912,10 +994,12 @@ export function startGame() {
 
 // 關閉成就列表按鈕：隱藏成就列表並顯示暫停選單
 document.getElementById('ach-close').onclick = () => {
-  // 隱藏成就列表 overlay
   document.getElementById('ach-overlay').style.display = 'none';
-  // 顯示暫停選單 overlay（保持遊戲暫停）
-  document.getElementById('pause-overlay').style.display = 'flex';
+  if (gameState.overlayReturnTarget === 'level') {
+    document.getElementById('level-overlay').style.display = 'flex';
+  } else {
+    document.getElementById('pause-overlay').style.display = 'flex';
+  }
 };
  // 關閉成就詳情
  document.getElementById('ach-detail-close').onclick = () => {
@@ -947,8 +1031,11 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.items = [];
   gameState.bossDefeatedCount = 0;
   gameState.bossHitEffects = [];
+  gameState.playerHitEffects = [];
   gameState.itemGainToast = null;
   gameState.bossFlashUntil = 0;
+  gameState.playerFlashUntil = 0;
+  gameState.overlayReturnTarget = 'pause';
   gameState.unlockedWords = [];
   gameState.achievementsUnlocked = [];
   gameState.noErrorPractice = true;
@@ -1029,11 +1116,11 @@ document.getElementById('leaderboard-close').onclick = () => {
 function autoUseHealthIfNeeded() {
   if (gameState.health <= 0 && gameState.healthCount > 0) {
     gameState.healthCount -= 1;
-    gameState.health = Math.min(MAX_HEALTH, MAX_HEALTH * 0.3);
+    gameState.health = MAX_HEALTH;
     gameState.itemGainToast = {
       type: 'health-auto',
       count: gameState.healthCount,
-      label: '自動補血 +30%',
+      label: '補血藥自動發動',
       icon: '❤️',
       until: Date.now() + 1800
     };
@@ -1076,8 +1163,7 @@ export function showLevelOverlay() {
   if (gameState.score > prev.bestScore) progressParts.push('新高分');
   if (gameState.currentLevel > prev.bestLevel) progressParts.push('新關卡');
   if (gameState.maxCombo > prev.bestCombo) progressParts.push('連擊提升');
-  if (gameState.unlockedWords.length > prev.bestVocab) progressParts.push('圖鑑+1');
-
+  
   const lines = [
     `🎉 恭喜通過第 ${gameState.currentLevel} 關！`,
     `稱號：${getLevelTitle(gameState.currentLevel)}`,
@@ -1091,6 +1177,7 @@ export function showLevelOverlay() {
     if (idx === 1) return `<div class="level-line level-badge">${line}</div>`;
     return `<div class="level-line level-sub">${line}</div>`;
   }).join('');
+  gameState.overlayReturnTarget = 'level';
   ov.style.display = 'flex';
 
   btn.onclick = () => {

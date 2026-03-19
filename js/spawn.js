@@ -20,19 +20,13 @@ export function spawnLoop(gameState) {
   }
 
   function getBossKunaiSpeed(level) {
-    if (level <= 3) return 2.2;
-    if (level <= 6) return 2.6;
-    if (level <= 10) return 3.0;
-    if (level <= 20) return 3.4;
-    return 3.8;
+    const lv = Math.max(1, Math.min(30, Number(level) || 1));
+    return 2.1 + (lv - 1) * 0.14;
   }
 
   function getBossKunaiInterval(level) {
-    if (level <= 3) return 3600;
-    if (level <= 6) return 3300;
-    if (level <= 10) return 3000;
-    if (level <= 20) return 2700;
-    return 2400;
+    const lv = Math.max(1, Math.min(30, Number(level) || 1));
+    return Math.max(950, 3600 - (lv - 1) * 85);
   }
 
   function spawnPracticeGroup() {

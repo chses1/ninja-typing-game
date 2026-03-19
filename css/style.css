@@ -1232,7 +1232,11 @@ html, body {
 }
 
 #game-canvas.boss-hit-flash {
-  filter: brightness(1.45) saturate(1.35) contrast(1.1);
+  filter: brightness(1.7) saturate(1.55) contrast(1.14) drop-shadow(0 0 20px rgba(255, 236, 120, 0.95));
+}
+
+#game-canvas.player-hit-flash {
+  filter: brightness(1.2) saturate(1.25) contrast(1.08) drop-shadow(0 0 18px rgba(255, 120, 120, 0.95));
 }
 
 @media (min-width: 900px) and (max-width: 1400px) and (orientation: landscape) {

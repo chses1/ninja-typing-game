@@ -13,29 +13,37 @@ window.addEventListener('DOMContentLoaded', () => {
  // 暫停選單：呼叫成就紀錄
  document.getElementById('pause-ach-btn').onclick = () => {
   pauseOverlay.style.display = 'none';
-  stopPauseTips(); // ✅
+  stopPauseTips();
+  if (window.gameState) window.gameState.overlayReturnTarget = 'pause';
   document.getElementById('ach-btn').click();
 };
 
 document.getElementById('pause-vocab-btn').onclick = () => {
   pauseOverlay.style.display = 'none';
-  stopPauseTips(); // ✅
+  stopPauseTips();
+  if (window.gameState) window.gameState.overlayReturnTarget = 'pause';
   document.getElementById('vocab-btn').click();
 };
 
 
   document.getElementById('pause-resume-btn').onclick = () => hidePauseMenu();
 
-  // 圖鑑/成就關閉後回暫停選單
   document.getElementById('vocab-overlay-close-btn').onclick = () => {
     vocabOverlay.style.display = 'none';
-    pauseOverlay.style.display = 'flex';
+    if (window.gameState?.overlayReturnTarget === 'level') {
+      document.getElementById('level-overlay').style.display = 'flex';
+    } else if (pauseOverlay) {
+      pauseOverlay.style.display = 'flex';
+    }
   };
   document.getElementById('ach-close').onclick = () => {
-  achOverlay.style.display = 'none';
-  // 若你要從暫停選單回來：
-  if (pauseOverlay) pauseOverlay.style.display = 'flex';
-};
+    achOverlay.style.display = 'none';
+    if (window.gameState?.overlayReturnTarget === 'level') {
+      document.getElementById('level-overlay').style.display = 'flex';
+    } else if (pauseOverlay) {
+      pauseOverlay.style.display = 'flex';
+    }
+  };
 });
 
 // ✅ 暫停提示輪播（全域）
@@ -46,7 +54,7 @@ const PAUSE_TIPS = [
   '💥 爆擊：連擊（Combo）越高，輸入越穩，分數累積越快！請盡量不要按錯字母。',
   '🎯 練習階段：打中標靶 +10 分。維持連擊可以更快累積高分與道具。',
   '🧿 分身符：畫面最多出現 2 個半透明分身，可各擋 1 次 Boss 手裡劍。',
-  '🧪 補血道具：現在只會在血量掉到 0 時自動發動，一次回 30%。',
+  '🧪 補血藥：血量掉到 0 時才會自動發動，直接補滿血。',
   '🧠 Boss 攻略：先「攔截」第一枚手裡劍（打出同字母）→ 再依序輸入 Boss 單字攻擊弱點。',
   '📌 計分重點：穩定不失誤 > 亂按。保持連擊才能拿到更多道具與更高分。',
   '🔥 進階技巧：先練「看字母→立即按」的反射；Boss 戰時專心看第一枚手裡劍字母最重要。'
@@ -121,7 +129,7 @@ export function setupInput(gameState) {
               gameState.showItemGainToast('decoy', gameState.decoyCount);
             }
           }
-          if (gameState.combo % 30 === 0 && gameState.healthCount < 5) {
+          if (gameState.combo % 30 === 0 && gameState.healthCount < 2) {
             gameState.healthCount += 1;
             if (typeof gameState.showItemGainToast === 'function') {
               gameState.showItemGainToast('health', gameState.healthCount);
