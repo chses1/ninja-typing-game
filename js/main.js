@@ -81,12 +81,18 @@ function showBossTutorialOnce() {
   const el = document.getElementById('boss-tutorial-overlay');
   if (!el) return false;
   gameState.paused = true;
+  if (typeof gameState.pauseSpawnSystems === 'function') {
+    gameState.pauseSpawnSystems();
+  }
   el.classList.add('show');
   const btn = el.querySelector('#boss-tutorial-btn');
   if (btn) {
     btn.onclick = () => {
       el.classList.remove('show');
       gameState.paused = false;
+      if (typeof gameState.resumeSpawnSystems === 'function') {
+        gameState.resumeSpawnSystems();
+      }
     };
   }
   return true;
@@ -132,21 +138,15 @@ function showItemGainToast(type, count) {
 
 function pauseGameForModal() {
   gameState.paused = true;
-
-  if (!gameState.bossActive && gameState.practiceTimer) {
-    gameState._remainingPractice = Math.max(0, (gameState.practiceEnd || Date.now()) - Date.now());
-    clearTimeout(gameState.practiceTimer);
-    gameState.practiceTimer = null;
+  if (typeof gameState.pauseSpawnSystems === 'function') {
+    gameState.pauseSpawnSystems();
   }
 }
 
 function resumeGameFromModal() {
   gameState.paused = false;
-
-  if (gameState._remainingPractice > 0 && !gameState.bossActive && !gameState.gameOver) {
-    gameState.practiceTimer = setTimeout(gameState.startBoss, gameState._remainingPractice);
-    gameState.practiceEnd = Date.now() + gameState._remainingPractice;
-    gameState._remainingPractice = 0;
+  if (!gameState.gameOver && typeof gameState.resumeSpawnSystems === 'function') {
+    gameState.resumeSpawnSystems();
   }
 }
 
@@ -197,6 +197,9 @@ function finalizeEndGame() {
   gameState.health = 0;
   gameState.practiceEnd = null;
   gameState._remainingPractice = 0;
+  if (typeof gameState.pauseSpawnSystems === 'function') {
+    gameState.pauseSpawnSystems();
+  }
   if (gameState.practiceTimer) {
     clearTimeout(gameState.practiceTimer);
     gameState.practiceTimer = null;
@@ -291,6 +294,9 @@ function showLeaderboardAfterGameOver() {
 
   gameState.gameOver = true;
   gameState.paused = true;
+  if (typeof gameState.pauseSpawnSystems === 'function') {
+    gameState.pauseSpawnSystems();
+  }
   gameoverBg.style.display = 'block';
   keyboardEl.style.display = 'none';
 
@@ -1130,9 +1136,14 @@ function resetGameState({ keepPlayerId = true } = {}) {
   localStorage.setItem('unlockedWords', JSON.stringify([]));
   localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
 
-  if (oldPracticeTimer) {
+  if (typeof gameState.destroySpawnLoop === 'function') {
+    gameState.destroySpawnLoop();
+  } else if (oldPracticeTimer) {
     clearTimeout(oldPracticeTimer);
   }
+  gameState._bossInterval = null;
+  gameState._levelWatchInterval = null;
+  gameState._spawnLoopActive = false;
 
   ['level-overlay','pause-overlay','vocab-overlay','ach-overlay','leaderboard-overlay','end-confirm-overlay']
     .forEach(id => {

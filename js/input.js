@@ -256,6 +256,9 @@ if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEdit
         if (typeof window.spawnLoop === 'function') {
           window.spawnLoop(gameState);
         }
+        if (typeof gameState.resumeSpawnSystems === 'function') {
+          gameState.resumeSpawnSystems();
+        }
       }
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -274,31 +277,22 @@ function showPauseMenu() {
   if (!pauseOverlay) pauseOverlay = document.getElementById('pause-overlay');
   if (!pauseOverlay) return;
   if (window.gameState?.gameOver || window.gameState?.endConfirmOpen) return;
+  if (window.gameState?.paused) return;
 
   pauseOverlay.style.display = 'flex';
-    // ✅ 暫停成就：第一次暫停 + 暫停次數累計
+
   if (window.gameState) {
     window.gameState.pauseUsed = true;
     window.gameState.pauseCount = (window.gameState.pauseCount || 0) + 1;
-
-    // ✅ 立刻檢查成就（不用等過關）
     checkAchievements(['ach09', 'ach19']);
-  }
-
-startPauseTips(); // ✅ 新增：開始輪播提示
-
-  if (window.gameState) {
     window.gameState.paused = true;
 
-    if (!window.gameState.bossActive && window.gameState.practiceTimer) {
-      window.gameState._remainingPractice = Math.max(
-        0,
-        window.gameState.practiceEnd - Date.now()
-      );
-      clearTimeout(window.gameState.practiceTimer);
-      window.gameState.practiceTimer = null;
+    if (typeof window.gameState.pauseSpawnSystems === 'function') {
+      window.gameState.pauseSpawnSystems();
     }
   }
+
+  startPauseTips();
 }
 
 function hidePauseMenu() {
@@ -306,18 +300,13 @@ function hidePauseMenu() {
   if (!pauseOverlay) return;
 
   pauseOverlay.style.display = 'none';
-stopPauseTips(); // ✅ 新增：停止輪播提示
+  stopPauseTips();
 
   if (!window.gameState) return;
 
   window.gameState.paused = false;
 
-  if (window.gameState._remainingPractice > 0 && !window.gameState.bossActive) {
-    window.gameState.practiceTimer = setTimeout(
-      window.gameState.startBoss,
-      window.gameState._remainingPractice
-    );
-    window.gameState.practiceEnd = Date.now() + window.gameState._remainingPractice;
-    window.gameState._remainingPractice = 0;
+  if (typeof window.gameState.resumeSpawnSystems === 'function') {
+    window.gameState.resumeSpawnSystems();
   }
 }
