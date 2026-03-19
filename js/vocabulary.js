@@ -2,13 +2,13 @@
 
 export const vocabulary = [
   // 1~10 關：主題式基礎單字
-  { level: 1, word: 'CAT',   length: 3, category: '動物夥伴（1-5關）', definition: '貓',    partOfSpeech: 'n.', example: 'The cat is sleeping.',         exampleZh: '這隻貓正在睡覺。', image: 'img/cat.png' },
-  { level: 2, word: 'DOG',   length: 3, category: '動物夥伴（1-5關）', definition: '狗',    partOfSpeech: 'n.', example: 'The dog runs fast.',           exampleZh: '這隻狗跑得很快。', image: 'img/dog.png' },
-  { level: 3, word: 'FISH',  length: 4, category: '動物夥伴（1-5關）', definition: '魚',    partOfSpeech: 'n.', example: 'A fish swims in water.',       exampleZh: '魚在水裡游泳。', image: 'img/fish.png' },
+  { level: 1, word: 'CAT',   length: 3, category: '基礎練習（1-5關）', definition: '貓',    partOfSpeech: 'n.', example: 'The cat is sleeping.',         exampleZh: '這隻貓正在睡覺。', image: 'img/cat.png' },
+  { level: 2, word: 'DOG',   length: 3, category: '基礎練習（1-5關）', definition: '狗',    partOfSpeech: 'n.', example: 'The dog runs fast.',           exampleZh: '這隻狗跑得很快。', image: 'img/dog.png' },
+  { level: 3, word: 'FISH',  length: 4, category: '基礎練習（1-5關）', definition: '魚',    partOfSpeech: 'n.', example: 'A fish swims in water.',       exampleZh: '魚在水裡游泳。', image: 'img/fish.png' },
 
-  { level: 4, word: 'BAG',   length: 3, category: '動物夥伴（1-5關）', definition: '書包',  partOfSpeech: 'n.', example: 'This is my bag.',              exampleZh: '這是我的書包。', image: 'img/bag.png' },
-  { level: 5, word: 'PEN',   length: 3, category: '動物夥伴（1-5關）', definition: '原子筆',partOfSpeech: 'n.', example: 'I have a pen.',                 exampleZh: '我有一支原子筆。', image: 'img/pen.png' },
-  { level: 6, word: 'BOOK',  length: 4, category: '動物夥伴（1-5關）', definition: '書',    partOfSpeech: 'n.', example: 'This is my book.',              exampleZh: '這是我的書。', image: 'img/book.png' },
+  { level: 4, word: 'BAG',   length: 3, category: '基礎練習（1-5關）', definition: '書包',  partOfSpeech: 'n.', example: 'This is my bag.',              exampleZh: '這是我的書包。', image: 'img/bag.png' },
+  { level: 5, word: 'PEN',   length: 3, category: '基礎練習（1-5關）', definition: '原子筆',partOfSpeech: 'n.', example: 'I have a pen.',                 exampleZh: '我有一支原子筆。', image: 'img/pen.png' },
+  { level: 6, word: 'BOOK',  length: 4, category: '校園生活（6-10關）', definition: '書',    partOfSpeech: 'n.', example: 'This is my book.',              exampleZh: '這是我的書。', image: 'img/book.png' },
 
   { level: 7, word: 'BED',   length: 3, category: '校園生活（6-10關）', definition: '床',    partOfSpeech: 'n.', example: 'I sleep on the bed.',           exampleZh: '我睡在床上。', image: 'img/bed.png' },
   { level: 8, word: 'FAN',   length: 3, category: '校園生活（6-10關）', definition: '電風扇',partOfSpeech: 'n.', example: 'Turn on the fan.',              exampleZh: '把電風扇打開。', image: 'img/fan.png' },

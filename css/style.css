@@ -868,41 +868,59 @@ html, body {
   color: #fff;
 }
 
-/* 詞彙圖鑑重新排版：6 類、每類 5 格 */
+/* 詞彙圖鑑重新排版：6 類全部盡量同頁顯示 */
 #vocab-overlay > div {
-  width: min(1100px, 94vw);
+  width: min(1240px, 96vw);
+  max-height: 92vh !important;
+  padding: 22px !important;
 }
 #vocab-ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
   overflow: visible;
   white-space: normal;
   padding-bottom: 0;
 }
 .vocab-section {
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 .vocab-section-title {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+  font-size: clamp(18px, 2.2vw, 24px);
 }
 .vocab-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 .vocab-cell {
   width: 100%;
-  min-height: 132px;
+  min-height: 116px;
   height: auto;
   margin: 0;
-  padding: 8px 6px 10px;
+  padding: 8px 4px 8px;
+  border-radius: 14px;
 }
 .vocab-img, .vocab-blank {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
 }
 .vocab-word {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+}
+#vocab-ul > div:last-child {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1100px) {
+  #vocab-ul {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 900px) {
+  .vocab-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
   .vocab-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
