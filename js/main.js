@@ -203,6 +203,7 @@ function finalizeEndGame() {
   }
   const bossTutorial = document.getElementById('boss-tutorial-overlay');
   if (bossTutorial) bossTutorial.classList.remove('show');
+  showLeaderboardAfterGameOver();
 }
 
 function triggerBossHitFlash() {
@@ -283,6 +284,48 @@ function getLevelTitle(level) {
   if (level <= 20) return '生活達人';
   if (level <= 25) return '進階挑戰者';
   return '終極忍者';
+}
+
+function showLeaderboardAfterGameOver() {
+  if (gameState.gameOver) return;
+
+  gameState.gameOver = true;
+  gameState.paused = true;
+  gameoverBg.style.display = 'block';
+  keyboardEl.style.display = 'none';
+
+  const { bronzeCount, silverCount, goldCount } = countTrophies(gameState.achievementsUnlocked);
+  const vocabCount = gameState.unlockedWords.length;
+  const trophyCount = gameState.achievementsUnlocked.length;
+
+  const openLeaderboard = () => {
+    const overlay = document.getElementById('leaderboard-overlay');
+    if (overlay) overlay.style.display = 'flex';
+  };
+
+  if (!gameState.player.id) {
+    alert('❌ 請先登入才能上傳成績');
+    updateLeaderboard('').then(openLeaderboard);
+    return;
+  }
+
+  submitScore(
+    gameState.player.id,
+    gameState.currentLevel,
+    gameState.score,
+    vocabCount,
+    trophyCount,
+    bronzeCount,
+    silverCount,
+    goldCount
+  )
+  .catch(err => {
+    console.error('上傳失敗：', err);
+    alert(`❌ 上傳失敗：${err.message || '請稍後再試'}`);
+  })
+  .finally(() => {
+    updateLeaderboard(gameState.player.id).then(openLeaderboard);
+  });
 }
 
 const gameoverBg = document.getElementById('gameover-bg');
@@ -599,51 +642,7 @@ function gameLoop() {
   }
 
   if (gameState.health <= 0 && !gameState.gameOver) {
-    // 標記已進入遊戲結束，避免重複觸發
-    gameState.gameOver = true;
-
-    // 一、先顯示全螢幕背景
-    gameoverBg.style.display = 'block';
-    // 二、隱藏鍵盤（和其他暫時不需要的 UI）
-    keyboardEl.style.display = 'none';
-
-    // 這裡把成就解鎖清單傳進 countTrophies，算出銅／銀／金的數量
-    const { bronzeCount, silverCount, goldCount } = countTrophies(gameState.achievementsUnlocked);
-    // 圖鑑數就是 unlockedWords.length
-    const vocabCount = gameState.unlockedWords.length;
-    // 總成就數也可傳 trophyCount（供後端做取最大值判斷）
-    const trophyCount = gameState.achievementsUnlocked.length;
-
-    // 新增登入檢查與成績上傳流程
-    if (!gameState.player.id) {
-      alert('❌ 請先登入才能上傳成績');
-      updateLeaderboard('').then(() => {
-        document.getElementById('leaderboard-overlay').style.display = 'flex';
-      });
-    } else {
-      submitScore(
-        gameState.player.id,
-        gameState.currentLevel,
-        gameState.score,
-        vocabCount,
-        trophyCount,
-        bronzeCount,
-        silverCount,
-        goldCount
-      )
-      .then(() => {
-        updateLeaderboard(gameState.player.id).then(() => {
-          document.getElementById('leaderboard-overlay').style.display = 'flex';
-        });
-      })
-      .catch(err => {
-        console.error('上傳失敗：', err);
-        alert(`❌ 上傳失敗：${err.message || '請稍後再試'}`);
-        updateLeaderboard(gameState.player.id).then(() => {
-          document.getElementById('leaderboard-overlay').style.display = 'flex';
-        });
-      });
-    }
+    showLeaderboardAfterGameOver();
     return;
   }
   
