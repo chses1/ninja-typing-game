@@ -76,10 +76,20 @@ function ensureBossTutorialOverlay() {
 
 function showBossTutorialOnce() {
   ensureBossTutorialOverlay();
-  if (sessionStorage.getItem('bossTutorialShown') === 'yes') return;
+  if (sessionStorage.getItem('bossTutorialShown') === 'yes') return false;
   sessionStorage.setItem('bossTutorialShown', 'yes');
   const el = document.getElementById('boss-tutorial-overlay');
-  if (el) el.classList.add('show');
+  if (!el) return false;
+  gameState.paused = true;
+  el.classList.add('show');
+  const btn = el.querySelector('#boss-tutorial-btn');
+  if (btn) {
+    btn.onclick = () => {
+      el.classList.remove('show');
+      gameState.paused = false;
+    };
+  }
+  return true;
 }
 
 function ensureUnlockToast() {
@@ -703,7 +713,7 @@ export function startGame() {
   initEntities();
   gameState.currentLevel = 1;
   initLevel(1);
-  showBossTutorialOnce();
+  gameState.showBossTutorialOnce = showBossTutorialOnce;
   spawnLoop(gameState);
   renderUI(gameState);
   requestAnimationFrame(gameLoop);
@@ -899,19 +909,25 @@ export function showLevelOverlay() {
     unlockText = `新解鎖：${entry.word}（${entry.definition}）`;
   }
 
+  const progressParts = [];
+  const prev = getPlayerRecords();
+  if (gameState.score > prev.bestScore) progressParts.push('新高分');
+  if (gameState.currentLevel > prev.bestLevel) progressParts.push('新關卡');
+  if (gameState.maxCombo > prev.bestCombo) progressParts.push('連擊提升');
+  if (gameState.unlockedWords.length > prev.bestVocab) progressParts.push('圖鑑+1');
+
   const lines = [
     `🎉 恭喜通過第 ${gameState.currentLevel} 關！`,
     `稱號：${getLevelTitle(gameState.currentLevel)}`,
-    `主題：${getStageTitle(gameState.currentLevel)}`,
     `最佳連擊：${gameState.maxCombo}`,
   ];
   if (unlockText) lines.push(unlockText);
-  lines.push(buildProgressMessage());
+  lines.push(progressParts.length ? `進步：${progressParts.join('、')}` : '表現很棒，繼續挑戰！');
+  buildProgressMessage();
   txt.innerHTML = lines.map((line, idx) => {
-    if (idx === 0) return `<div>${line}</div>`;
-    if (idx === 1) return `<div style="font-size:0.9em;color:#ffea00;">${line}</div>`;
-    if (idx === 2) return `<div style="font-size:0.75em;color:#c8f7ff;">${line}</div>`;
-    return `<div style="font-size:0.72em;color:#ffffff;">${line}</div>`;
+    if (idx === 0) return `<div class="level-line level-main">${line}</div>`;
+    if (idx === 1) return `<div class="level-line level-badge">${line}</div>`;
+    return `<div class="level-line level-sub">${line}</div>`;
   }).join('');
   ov.style.display = 'flex';
 

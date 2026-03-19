@@ -90,6 +90,11 @@ export function spawnLoop(gameState) {
       hitSlots:  Array(gameState.bossWord.length).fill(false)
     };
     gameState.bossInputProgress = 0;
+
+    if (typeof gameState.showBossTutorialOnce === 'function') {
+      gameState.showBossTutorialOnce();
+    }
+
     spawnKunai();
     bossInterval = setInterval(() => {
       if (gameState.bossActive) spawnKunai();

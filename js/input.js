@@ -96,20 +96,6 @@ export function setupInput(gameState) {
     setTimeout(() => btn.classList.remove('key-correct', 'key-wrong'), 220);
   }
 
-  function showMidMessage(text, type = 'good') {
-    let el = document.getElementById('mid-message');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'mid-message';
-      document.body.appendChild(el);
-    }
-    el.className = `mid-message show ${type}`;
-    el.textContent = text;
-    clearTimeout(showMidMessage._timer);
-    showMidMessage._timer = setTimeout(() => {
-      el.classList.remove('show');
-    }, 900);
-  }
 
   // 處理所有鍵入
   function handleKey(raw) {
@@ -124,7 +110,6 @@ export function setupInput(gameState) {
           flashKey(L, true);
           T.hit = true;
           T.justHit = true;
-          showMidMessage('好球！', 'good');
           gameState.hitCount++; // 更新命中次數
           // Combo 增加
           gameState.combo++;
@@ -154,7 +139,6 @@ export function setupInput(gameState) {
         } else {
           // 錯誤輸入，中斷連擊
           flashKey(L, false);
-          showMidMessage('再試一次！', 'warn');
           gameState.combo = 0;
           gameState.noErrorPractice = false; // 標記練習階段失誤
         }
@@ -170,7 +154,6 @@ if (gameState.bossActive) {
     console.log('[Deflect] 按下', L, '手裡劍字母是', firstKunai.letter);
     if (L === firstKunai.letter) {
       flashKey(L, true);
-      showMidMessage('擋得漂亮！', 'good');
       firstKunai.hit = true;
       console.log('[Deflect] 已移除手裡劍並推送反彈飛鏢');
       // 立即移除已 deflect 的手裡劍
@@ -190,7 +173,6 @@ if (gameState.bossActive) {
   const progress = gameState.bossInputProgress || 0;
   if (progress < word.length && L === word[progress]) {
     flashKey(L, true);
-    showMidMessage('命中弱點！', 'good');
     gameState.playerProjectiles.push({
       x: gameState.player.x + gameState.player.width,
       y: (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
@@ -205,7 +187,6 @@ if (gameState.bossActive) {
   }
   
   flashKey(L, false);
-  showMidMessage('看準再按！', 'warn');
   return;
 }
   }
