@@ -120,12 +120,23 @@ function showUnlockToast(entry) {
 
 function showItemGainToast(type, count) {
   const label = type === 'health' ? '補血符' : '分身符';
+  const icon = type === 'health' ? '❤️' : '👥';
   gameState.itemGainToast = {
     type,
     count,
     label,
-    until: Date.now() + 1500
+    icon,
+    until: Date.now() + 1800
   };
+}
+
+function triggerBossHitFlash() {
+  gameState.bossFlashUntil = Date.now() + 180;
+  canvas.classList.remove('boss-hit-flash');
+  void canvas.offsetWidth;
+  canvas.classList.add('boss-hit-flash');
+  clearTimeout(triggerBossHitFlash._timer);
+  triggerBossHitFlash._timer = setTimeout(() => canvas.classList.remove('boss-hit-flash'), 180);
 }
 
 function addBossHitEffect(x, y) {
@@ -254,6 +265,7 @@ const gameState = {
   bossDefeatedCount: 0, // 打倒boss數
   bossHitEffects: [],
   itemGainToast: null,
+  bossFlashUntil: 0,
   unlockedWords: JSON.parse(localStorage.getItem('unlockedWords') || '[]'),
   noErrorPractice: false,    // 練習階段 30 秒內是否無失誤
   gameOver: false,            // ← 新增：遊戲是否已結束
@@ -486,10 +498,6 @@ function gameLoop() {
     return;
   }
 
-  if (gameState.health <= 60 && gameState.healthCount > 0) {
-    autoUseHealthIfNeeded();
-  }
-
   if (gameState.health <= 0 && !gameState.gameOver) {
     // 標記已進入遊戲結束，避免重複觸發
     gameState.gameOver = true;
@@ -644,8 +652,7 @@ gameState.items.forEach((it, idx) => {
         gameState.boss.hitSlots[p.weakIndex] = true;
         addBossHitEffect(hitX, hitY);
         if (gameState.onBossHealthChange) gameState.onBossHealthChange();
-        canvas.classList.add('boss-hit-flash');
-        setTimeout(() => canvas.classList.remove('boss-hit-flash'), 120);
+        triggerBossHitFlash();
         if (gameState.boss.hp <= 0) {
           gameState.bossActive = false;
           showLevelOverlay();
@@ -693,7 +700,25 @@ gameState.items.forEach((it, idx) => {
     };
 
     // 頭目本體
-    ctx.drawImage(enemyBossImg, B.x, B.y, B.width, B.height);
+    const bossFlashing = gameState.bossFlashUntil && gameState.bossFlashUntil > Date.now();
+    const bossDrawX = bossFlashing ? B.x + Math.sin(Date.now() * 0.08) * 8 : B.x;
+    const bossDrawY = bossFlashing ? B.y + Math.cos(Date.now() * 0.09) * 4 : B.y;
+    if (bossFlashing) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(255, 240, 120, 0.95)';
+      ctx.shadowBlur = 36;
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(enemyBossImg, bossDrawX - 4, bossDrawY - 4, B.width + 8, B.height + 8);
+      ctx.restore();
+    }
+    ctx.drawImage(enemyBossImg, bossDrawX, bossDrawY, B.width, B.height);
+    if (bossFlashing) {
+      ctx.save();
+      ctx.globalAlpha = 0.32;
+      ctx.fillStyle = '#fff7a8';
+      ctx.fillRect(bossDrawX, bossDrawY, B.width, B.height);
+      ctx.restore();
+    }
 
     // 手裡劍
     gameState.bossProjectiles.forEach((b,i)=>{
@@ -768,32 +793,64 @@ gameState.items.forEach((it, idx) => {
   if (gameState.itemGainToast && gameState.itemGainToast.until > Date.now()) {
     const toast = gameState.itemGainToast;
     ctx.save();
-    ctx.globalAlpha = Math.max(0.35, (toast.until - Date.now()) / 1500);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
-    const boxW = Math.min(360, canvas.width * 0.7);
-    const boxH = 92;
+    ctx.globalAlpha = Math.max(0.35, (toast.until - Date.now()) / 1800);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.82)';
+    const boxW = Math.min(420, canvas.width * 0.76);
+    const boxH = 110;
     const boxX = (canvas.width - boxW) / 2;
-    const boxY = canvas.height * 0.18;
+    const boxY = canvas.height * 0.14;
     if (ctx.roundRect) {
       ctx.beginPath();
-      ctx.roundRect(boxX, boxY, boxW, boxH, 18);
+      ctx.roundRect(boxX, boxY, boxW, boxH, 20);
       ctx.fill();
     } else {
       ctx.fillRect(boxX, boxY, boxW, boxH);
     }
+    ctx.strokeStyle = '#ffea00';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(boxX + 2, boxY + 2, boxW - 4, boxH - 4);
     ctx.fillStyle = '#ffea00';
     ctx.font = '900 24px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('道具獲得！', canvas.width / 2, boxY + 28);
+    ctx.fillText('道具獲得！', canvas.width / 2, boxY + 26);
+    ctx.font = '900 40px sans-serif';
+    ctx.fillText(toast.icon || '🎁', canvas.width / 2 - 108, boxY + 70);
     ctx.fillStyle = '#ffffff';
     ctx.font = '900 30px sans-serif';
-    ctx.fillText(`${toast.label} × ${toast.count}`, canvas.width / 2, boxY + 62);
+    ctx.fillText(`${toast.label}`, canvas.width / 2 + 10, boxY + 62);
+    ctx.font = '900 18px sans-serif';
+    const subText = toast.type === 'decoy' ? `分身護盾：${Math.min(toast.count, 2)}/2` : (toast.type === 'health-auto' ? '血量歸零時已自動發動' : `剩餘補血符：${toast.count}`);
+    ctx.fillText(subText, canvas.width / 2 + 10, boxY + 90);
     ctx.restore();
   } else if (gameState.itemGainToast && gameState.itemGainToast.until <= Date.now()) {
     gameState.itemGainToast = null;
+  gameState.bossFlashUntil = 0;
   }
 
+
+  // 4. 分身護盾（半透明殘像，最多 2 個）
+  const activeClones = Math.min(gameState.decoyCount || 0, 2);
+  if (activeClones > 0) {
+    const P = gameState.player;
+    let cloneImg;
+    const cloneLvl = gameState.currentLevel;
+    if (cloneLvl <= 10) cloneImg = playerImg0;
+    else if (cloneLvl <= 20) cloneImg = playerImgMid;
+    else cloneImg = playerImg1;
+
+    const offsets = [{ x: -26, y: -10 }, { x: 22, y: 10 }];
+    for (let i = 0; i < activeClones; i++) {
+      const off = offsets[i];
+      ctx.save();
+      ctx.globalAlpha = 0.35 - i * 0.08;
+      ctx.drawImage(cloneImg, P.x + off.x, P.y + off.y, P.baseWidth, P.baseHeight);
+      ctx.strokeStyle = 'rgba(160, 255, 255, 0.75)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(P.x + off.x + 12, P.y + off.y + 12, P.baseWidth - 24, P.baseHeight - 24);
+      ctx.restore();
+    }
+  }
 
   // 4. 玩家繪製（固定大小）
   const P   = gameState.player;
@@ -891,6 +948,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.bossDefeatedCount = 0;
   gameState.bossHitEffects = [];
   gameState.itemGainToast = null;
+  gameState.bossFlashUntil = 0;
   gameState.unlockedWords = [];
   gameState.achievementsUnlocked = [];
   gameState.noErrorPractice = true;
@@ -969,43 +1027,21 @@ document.getElementById('leaderboard-close').onclick = () => {
 };
 
 function autoUseHealthIfNeeded() {
-  const lowHealthThreshold = 60;
-  if (gameState.health > 0 && gameState.health <= lowHealthThreshold && gameState.healthCount > 0) {
+  if (gameState.health <= 0 && gameState.healthCount > 0) {
     gameState.healthCount -= 1;
-    gameState.health = Math.min(
-      MAX_HEALTH,
-      gameState.health + MAX_HEALTH * 0.3
-    );
+    gameState.health = Math.min(MAX_HEALTH, MAX_HEALTH * 0.3);
+    gameState.itemGainToast = {
+      type: 'health-auto',
+      count: gameState.healthCount,
+      label: '自動補血 +30%',
+      icon: '❤️',
+      until: Date.now() + 1800
+    };
     return true;
   }
   return false;
 }
 
-// ↓ 在這裡貼上：點擊／觸控使用補血藥 ↓
-function tryUseHealth(x, y) {
-  const p = gameState.player;
-  if (
-    x >= p.x && x <= p.x + p.width &&
-    y >= p.y && y <= p.y + p.height &&
-    gameState.healthCount > 0
-  ) {
-    gameState.healthCount -= 1;
-    gameState.health = Math.min(
-      MAX_HEALTH,
-      gameState.health + MAX_HEALTH * 0.3
-    );
-    // （可在此播放補血特效）
-  }
-}
-canvas.addEventListener('mousedown',  e => {
-  const r = canvas.getBoundingClientRect();
-  tryUseHealth(e.clientX - r.left, e.clientY - r.top);
-});
-canvas.addEventListener('touchstart', e => {
-  const r = canvas.getBoundingClientRect();
-  const t = e.touches[0];
-  tryUseHealth(t.clientX - r.left, t.clientY - r.top);
-});
 
 export function showLevelOverlay() {
   if (gameState.bossHealthIntact) {
@@ -1070,35 +1106,24 @@ document.getElementById('vocab-btn').onclick = function() {
   const unlocked = gameState.unlockedWords || [];
   const latestUnlocked = unlocked[unlocked.length - 1];
 
-  const groups = vocabulary.reduce((acc, item) => {
-    const key = item.category || `第${item.level}關`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
-
-  const html = Object.entries(groups).map(([title, items]) => `
-    <div class="vocab-section">
-      <div class="vocab-section-title">${title}</div>
-      <div class="vocab-grid">
-        ${items.map(v => {
-          const got = unlocked.includes(v.word);
-          const latestClass = got && latestUnlocked === v.word ? ' highlight-unlock' : '';
-          return `
-            <div class="vocab-cell${latestClass}" data-level="${v.level}" style="opacity:${got ? '1' : '0.5'};filter:${got ? 'none' : 'grayscale(1)'};">
-              ${got
-                ? `<img src="${v.image}" alt="${v.word}" class="vocab-img"><div class="vocab-word">${v.word}</div>`
-                : `<div class="vocab-blank">?</div><div class="vocab-word">???</div>`
-              }
-              <div style="font-size:0.8em;color:${got ? '#ffe082' : '#999'};margin-top:4px;">${got ? v.definition : '尚未解鎖'}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `).join('') + `
-    <div style="margin-top:12px;padding:12px;background:#222;border-radius:10px;">
-      <b>小提示：</b>點選已解鎖的單字可顯示詳細資訊！
+  const html = `
+    <div class="vocab-legend">共 30 個單字｜已解鎖 ${unlocked.length} 個｜點選已解鎖單字可看詳細資訊</div>
+    <div class="vocab-all-grid">
+      ${vocabulary.map(v => {
+        const got = unlocked.includes(v.word);
+        const latestClass = got && latestUnlocked === v.word ? ' highlight-unlock' : '';
+        return `
+          <div class="vocab-cell compact${latestClass}" data-level="${v.level}" style="opacity:${got ? '1' : '0.52'};filter:${got ? 'none' : 'grayscale(1)'};">
+            <div class="vocab-chip">L${v.level}</div>
+            <div class="vocab-mini-category">${v.category || `第${v.level}關`}</div>
+            ${got
+              ? `<img src="${v.image}" alt="${v.word}" class="vocab-img"><div class="vocab-word">${v.word}</div>`
+              : `<div class="vocab-blank">?</div><div class="vocab-word">???</div>`
+            }
+            <div class="vocab-meaning">${got ? v.definition : '尚未解鎖'}</div>
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
 

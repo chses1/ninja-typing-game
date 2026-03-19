@@ -1145,3 +1145,161 @@ html, body {
     font-size: 13px;
   }
 }
+
+
+/* ===== 2026-03-19 第三波：圖鑑改 10 欄、Boss 受擊更明顯 ===== */
+#vocab-overlay > div {
+  width: min(1320px, 97vw) !important;
+  max-height: min(92vh, 900px) !important;
+  padding: 16px 18px 72px !important;
+  position: relative;
+}
+
+#vocab-ul {
+  display: block !important;
+}
+
+.vocab-legend {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 234, 0, 0.12);
+  color: #fff3a2;
+  font-weight: 800;
+  text-align: center;
+  font-size: 15px;
+}
+
+.vocab-all-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vocab-cell.compact {
+  min-height: 108px !important;
+  padding: 4px 3px 6px !important;
+  border-radius: 12px;
+  position: relative;
+}
+
+.vocab-chip {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 234, 0, 0.2);
+  color: #ffea00;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.vocab-mini-category {
+  width: 100%;
+  min-height: 22px;
+  margin-top: 12px;
+  margin-bottom: 2px;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+  color: #cfcfcf;
+}
+
+.vocab-cell.compact .vocab-img,
+.vocab-cell.compact .vocab-blank {
+  width: 32px !important;
+  height: 32px !important;
+  margin: 2px 0 !important;
+}
+
+.vocab-cell.compact .vocab-word {
+  font-size: 0.68rem !important;
+  line-height: 1.05 !important;
+}
+
+.vocab-meaning {
+  margin-top: 2px;
+  font-size: 0.56rem !important;
+  line-height: 1.05 !important;
+  color: #ffe082;
+  text-align: center;
+}
+
+#vocab-overlay-close-btn {
+  position: sticky;
+  bottom: max(6px, env(safe-area-inset-bottom));
+}
+
+#game-canvas.boss-hit-flash {
+  filter: brightness(1.45) saturate(1.35) contrast(1.1);
+}
+
+@media (min-width: 900px) and (max-width: 1400px) and (orientation: landscape) {
+  #vocab-overlay > div {
+    width: min(1280px, 97vw) !important;
+    max-height: 90vh !important;
+    padding: 12px 14px 68px !important;
+  }
+
+  .vocab-legend {
+    font-size: 13px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+  }
+
+  .vocab-all-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .vocab-cell.compact {
+    min-height: 96px !important;
+    padding: 3px 2px 5px !important;
+  }
+
+  .vocab-chip {
+    top: 3px;
+    left: 3px;
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+
+  .vocab-mini-category {
+    min-height: 18px;
+    margin-top: 10px;
+    font-size: 8px;
+  }
+
+  .vocab-cell.compact .vocab-img,
+  .vocab-cell.compact .vocab-blank {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .vocab-cell.compact .vocab-word {
+    font-size: 0.6rem !important;
+  }
+
+  .vocab-meaning {
+    font-size: 0.5rem !important;
+  }
+
+  #vocab-overlay-close-btn {
+    margin-top: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 899px) {
+  .vocab-all-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .vocab-all-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
