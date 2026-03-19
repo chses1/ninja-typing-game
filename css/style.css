@@ -756,3 +756,115 @@ html, body {
   color: #ffe600 !important;
   font-weight: 800 !important;
 }
+
+
+#instructions {
+  width: 24%;
+  min-width: 220px;
+  font-size: 24px;
+  line-height: 1.55;
+  font-weight: 800;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+#instructions div + div {
+  margin-top: 4px;
+}
+
+@media (max-width: 1024px) {
+  #instructions {
+    width: 30%;
+    font-size: 20px;
+  }
+}
+
+.level-clear-badge {
+  min-width: min(420px, 88vw);
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe36e, #ff9f1c);
+  color: #402100;
+  font-weight: 900;
+  font-size: clamp(24px, 4vw, 34px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.level-clear-stats {
+  width: min(560px, 92vw);
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: clamp(18px, 2.7vw, 24px);
+  line-height: 1.7;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+}
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 4200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.tutorial-box {
+  width: min(680px, 94vw);
+  background: linear-gradient(180deg, #243b55, #141e30);
+  border: 4px solid #ffd54a;
+  border-radius: 28px;
+  padding: 28px 24px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.35);
+}
+
+.tutorial-title {
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: 900;
+  color: #ffe36e;
+  margin-bottom: 18px;
+}
+
+.tutorial-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.1);
+  font-size: clamp(22px, 3.6vw, 30px);
+  font-weight: 800;
+  text-align: left;
+}
+
+.tutorial-step-num {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffe36e;
+  color: #3a2400;
+  font-weight: 900;
+}
+
+.tutorial-btn {
+  margin-top: 18px;
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: #ff9f1c;
+  color: #fff;
+  font-size: clamp(22px, 3.8vw, 30px);
+  font-weight: 900;
+  cursor: pointer;
+}

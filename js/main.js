@@ -121,6 +121,48 @@ const gameState = {
 };
 window.gameState = gameState;
 
+function getLevelTheme(level) {
+  if (level <= 3) return '動物忍者訓練';
+  if (level <= 6) return '校園裝備訓練';
+  if (level <= 8) return '居家道具訓練';
+  if (level <= 10) return '動作忍術訓練';
+  if (level <= 20) return '地球防衛戰';
+  return '終極忍者挑戰';
+}
+
+function getLevelClearTitle(gs) {
+  const combo = gs.maxCombo || 0;
+  const hp = gs.health || 0;
+  if (gs.noErrorPractice && gs.bossHealthIntact) return '完美忍者！';
+  if (combo >= 12) return '神速忍者！';
+  if (combo >= 8) return '連擊高手！';
+  if (hp >= 80) return '穩定高手！';
+  return '勇敢學徒！';
+}
+
+function ensureBossTutorialOverlay() {
+  if (document.getElementById('boss-tutorial-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'boss-tutorial-overlay';
+  overlay.className = 'tutorial-overlay';
+  overlay.style.display = 'none';
+  overlay.innerHTML = `
+    <div class="tutorial-box">
+      <div class="tutorial-title">Boss 攻略！</div>
+      <div class="tutorial-step"><span class="tutorial-step-num">1</span><span>先打掉飛來的字母</span></div>
+      <div class="tutorial-step"><span class="tutorial-step-num">2</span><span>再照順序打 Boss 單字</span></div>
+      <div class="tutorial-step"><span class="tutorial-step-num">3</span><span>打完就能過關</span></div>
+      <button id="boss-tutorial-btn" class="tutorial-btn">我知道了，開始挑戰！</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('boss-tutorial-btn').onclick = () => {
+    overlay.style.display = 'none';
+    localStorage.setItem('bossTutorialSeen', '1');
+    if (typeof window.__startBossNow === 'function') window.__startBossNow();
+  };
+}
+
 // ===============================
 // 🛠 成就偵錯面板（Ctrl/Cmd + D 開關）
 // ===============================
@@ -580,6 +622,7 @@ export function startGame() {
     gameState._inputInitialized = true;
   }
   initEntities();
+  ensureBossTutorialOverlay();
   gameState.currentLevel = 1;
   initLevel(1);
   spawnLoop(gameState);
@@ -769,18 +812,28 @@ export function showLevelOverlay() {
   const ov   = document.getElementById('level-overlay');
   const txt  = document.getElementById('level-text');
   const btn  = document.getElementById('level-btn');
+  const badgeEl = document.getElementById('level-clear-badge');
+  const statsEl = document.getElementById('level-clear-stats');
 
-  // ...（下面維持你原本的程式）
+  const entry = vocabulary.find(v => v.level === gameState.currentLevel);
+  if (entry && !gameState.unlockedWords.includes(entry.word)) {
+    gameState.unlockedWords.push(entry.word);
+    localStorage.setItem('unlockedWords', JSON.stringify(gameState.unlockedWords));
+  }
 
-  // 過關後解鎖單字
-const entry = vocabulary.find(v => v.level === gameState.currentLevel);
-if (entry && !gameState.unlockedWords.includes(entry.word)) {
-  gameState.unlockedWords.push(entry.word);
-  localStorage.setItem('unlockedWords', JSON.stringify(gameState.unlockedWords));
-}
+  const clearTitle = getLevelClearTitle(gameState);
+  const theme = getLevelTheme(gameState.currentLevel);
+  if (badgeEl) badgeEl.textContent = clearTitle;
+  if (statsEl && entry) {
+    statsEl.innerHTML = `
+      <div>本關主題：${theme}</div>
+      <div>本關單字：${entry.word}（${entry.definition}）</div>
+      <div>最佳連擊：${gameState.maxCombo}</div>
+    `;
+  }
 
   ov.style.display = 'flex';
-  txt.textContent  = `🎉 恭喜通過第 ${gameState.currentLevel} 關！🎉`;
+  txt.textContent  = `🎉 恭喜通過第 ${gameState.currentLevel} 關！`;
 
   btn.onclick = () => {
     ov.style.display       = 'none';

@@ -1,4 +1,12 @@
 // js/spawn.js
+function getPracticeDuration(level) {
+  if (level <= 3) return 15000;
+  if (level <= 6) return 18000;
+  if (level <= 10) return 20000;
+  if (level <= 20) return 22000;
+  return 25000;
+}
+
 export function spawnLoop(gameState) {
   const canvas     = document.getElementById('game-canvas');
   const keyboard   = document.getElementById('virtual-keyboard');
@@ -65,21 +73,19 @@ export function spawnLoop(gameState) {
       y:      gameState.boss.y + Math.random() * (gameState.boss.height - 150),
       width:  150,
       height: 150,
-      speed:  3,
+      speed:  gameState.currentLevel <= 2 ? 2.2 : gameState.currentLevel <= 5 ? 2.6 : 3,
       letter
     });
   }
 
-  function startBoss() {
+  function reallyStartBoss() {
     gameState.bossActive = true;
-    // 記錄頭目戰開始前的血量，並重置旗標
     gameState.bossHealthAtStart = gameState.health;
     gameState.bossHealthIntact = true;
     clearTimeout(gameState.practiceTimer);
     clearInterval(bossInterval);
     gameState.targets = [];
 
-    // 初始化 boss
     const pw = gameState.player.width;
     const ph = gameState.player.height;
     gameState.boss = {
@@ -92,16 +98,27 @@ export function spawnLoop(gameState) {
       word:      gameState.bossWord,
       hitSlots:  Array(gameState.bossWord.length).fill(false)
     };
-    // 重置頭目戰中，按字母順序輸入的進度
     gameState.bossInputProgress = 0;
-    // 首枚手裡劍
     spawnKunai();
     bossInterval = setInterval(() => {
       if (gameState.bossActive) spawnKunai();
     }, 3000);
     console.log('▶ startBoss reset, bossInputProgress=', gameState.bossInputProgress);
   }
-  // 提供給暫停恢復時重新啟動
+
+  function startBoss() {
+    const tutorialSeen = localStorage.getItem('bossTutorialSeen') === '1';
+    if (!tutorialSeen && (gameState.currentLevel || 1) === 1) {
+      const overlay = document.getElementById('boss-tutorial-overlay');
+      window.__startBossNow = reallyStartBoss;
+      if (overlay) {
+        overlay.style.display = 'flex';
+        return;
+      }
+    }
+    reallyStartBoss();
+  }
+
   gameState.startBoss = startBoss;
 
   // ────────────────
@@ -109,8 +126,9 @@ export function spawnLoop(gameState) {
   // ────────────────
   gameState.spawnPractice = () => {
     if (!gameState.practiceTimer) {
-      gameState.practiceTimer = setTimeout(startBoss, 30000);
-      gameState.practiceEnd   = Date.now() + 30000;
+      const practiceDuration = getPracticeDuration(gameState.currentLevel || 1);
+      gameState.practiceTimer = setTimeout(startBoss, practiceDuration);
+      gameState.practiceEnd   = Date.now() + practiceDuration;
       // 只在第一次啟動練習時重置失誤旗標
       gameState.noErrorPractice = true;
     }
