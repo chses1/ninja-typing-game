@@ -410,6 +410,7 @@ const gameState = {
   bossDefeatedCount: 0, // 打倒boss數
   bossHitEffects: [],
   playerHitEffects: [],
+  projectileClashEffects: [],
   itemGainToast: null,
   bossFlashUntil: 0,
   playerFlashUntil: 0,
@@ -773,6 +774,36 @@ gameState.items.forEach((it, idx) => {
     }
   });
 
+  // 2-1. 玩家手裡劍與 Boss 手裡劍互撞（只讓 deflect 飛鏢可攔截，避免 Boss 戰規則被打亂）
+  if (gameState.bossActive && gameState.playerProjectiles.length && gameState.bossProjectiles.length) {
+    for (let pi = gameState.playerProjectiles.length - 1; pi >= 0; pi--) {
+      const p = gameState.playerProjectiles[pi];
+      if (!p || !p.isDeflect) continue;
+
+      for (let bi = gameState.bossProjectiles.length - 1; bi >= 0; bi--) {
+        const b = gameState.bossProjectiles[bi];
+        if (!b) continue;
+
+        if (collide(p, b)) {
+          const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
+          const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
+
+          gameState.playerProjectiles.splice(pi, 1);
+          gameState.bossProjectiles.splice(bi, 1);
+          gameState.projectileClashEffects.push({
+            x: hitX,
+            y: hitY,
+            radius: 14,
+            alpha: 1,
+            life: 14,
+            maxLife: 14
+          });
+          break;
+        }
+      }
+    }
+  }
+
   // 3. 頭目 & 手裡劍
   if (gameState.bossActive) {
     const B = gameState.boss;
@@ -864,6 +895,30 @@ gameState.items.forEach((it, idx) => {
         gameState.bossProjectiles.splice(i, 1);
       }
 
+    });
+  }
+
+  // 3-0. 投射物互撞特效
+  if (Array.isArray(gameState.projectileClashEffects) && gameState.projectileClashEffects.length) {
+    gameState.projectileClashEffects = gameState.projectileClashEffects.filter((fx) => fx.life > 0 && fx.alpha > 0.02);
+    gameState.projectileClashEffects.forEach((fx) => {
+      const progress = 1 - fx.life / fx.maxLife;
+      const radius = fx.radius + progress * 24;
+
+      ctx.save();
+      ctx.globalAlpha = fx.alpha;
+      const grad = ctx.createRadialGradient(fx.x, fx.y, 2, fx.x, fx.y, radius);
+      grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+      grad.addColorStop(0.35, 'rgba(255,220,120,0.85)');
+      grad.addColorStop(1, 'rgba(255,120,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      fx.life -= 1;
+      fx.alpha *= 0.88;
     });
   }
 
@@ -1113,6 +1168,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.bossDefeatedCount = 0;
   gameState.bossHitEffects = [];
   gameState.playerHitEffects = [];
+  gameState.projectileClashEffects = [];
   gameState.itemGainToast = null;
   gameState.bossFlashUntil = 0;
   gameState.playerFlashUntil = 0;
