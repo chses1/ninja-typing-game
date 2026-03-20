@@ -327,23 +327,31 @@ function getHeroImageByLevel(level) {
   return 'img/player1.png';
 }
 
+function getStagePreviewHeroImage(level, isFinalCheckpoint = false) {
+  if (isFinalCheckpoint) return 'img/player2.png';
+  return getHeroImageByLevel(level);
+}
+
 function getNextStageHeroHtml(level) {
   const nextLevel = Math.min(30, level + 1);
   const isFinalCheckpoint = level >= 30;
   const previewLevel = isFinalCheckpoint ? level : nextLevel;
   const previewLabel = isFinalCheckpoint
-    ? '最終成長形態'
+    ? '忍者大師最終形態'
     : `下一階段角色：第 ${previewLevel} 關造型`;
+  const previewDesc = isFinalCheckpoint
+    ? '恭喜完成全部 30 關，最終成長形態已解鎖！'
+    : '準備用新造型迎接下一個 10 關挑戰。';
 
   return `
     <div class="stage-hero-preview ${isFinalCheckpoint ? 'final-stage' : ''}">
       <div class="stage-hero-copy">
         <div class="stage-hero-label">${isFinalCheckpoint ? '最終破關造型' : '角色即將升級'}</div>
         <div class="stage-hero-name">${previewLabel}</div>
-        <div class="stage-hero-desc">${isFinalCheckpoint ? '你已完成全部 30 關挑戰！' : '準備用新造型迎接下一個 10 關挑戰。'}</div>
+        <div class="stage-hero-desc">${previewDesc}</div>
       </div>
       <div class="stage-hero-portrait-wrap">
-        <img class="stage-hero-portrait" src="${getHeroImageByLevel(previewLevel)}" alt="${previewLabel}">
+        <img class="stage-hero-portrait" src="${getStagePreviewHeroImage(previewLevel, isFinalCheckpoint)}" alt="${previewLabel}">
       </div>
     </div>
   `;
