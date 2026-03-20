@@ -162,71 +162,54 @@ export function setupInput(gameState) {
       return;
     }
 
-// 二 + 三、頭目戰：依序處理 deflect 再處理弱點攻擊
+// 二 + 三、頭目戰：先清前方手裡劍，前面沒有手裡劍時才能打 Boss 弱點
 if (gameState.bossActive) {
-  // 2-1. Deflect 第一枚手裡劍（隨時都可攔截）
-  const firstKunai = gameState.bossProjectiles[0];
-  if (firstKunai && !firstKunai.hit) {
-    console.log('[Deflect] 按下', L, '手裡劍字母是', firstKunai.letter);
-    if (L === firstKunai.letter) {
+  const frontMostKunai = typeof window.findFrontMostBossProjectile === 'function'
+    ? window.findFrontMostBossProjectile()
+    : null;
+
+  // 2-1. 只要前方還有 Boss 手裡劍，就只能攔截「最前面那一顆」
+  if (frontMostKunai) {
+    if (L === frontMostKunai.letter) {
       flashKey(L, true);
-      firstKunai.hit = true;
-      console.log('[Deflect] 已移除手裡劍並推送反彈飛鏢');
-      // 立即移除已 deflect 的手裡劍
-      gameState.bossProjectiles.splice(0, 1);
-      if (Array.isArray(gameState.projectileClashEffects)) {
-        gameState.projectileClashEffects.push({
-          x: firstKunai.x + firstKunai.width * 0.5,
-          y: firstKunai.y + firstKunai.height * 0.5,
-          radius: 14,
-          alpha: 1,
-          life: 14,
-          maxLife: 14
-        });
-      }
       gameState.playerProjectiles.push({
         x: gameState.player.x + gameState.player.width,
-        y: firstKunai.y + firstKunai.height/2 - 75,
+        y: frontMostKunai.y + frontMostKunai.height / 2 - 75,
         width: 150, height: 150, speed: 20,
-        isDeflect: true,
         canClash: true,
         letter: L,
-        targetBossProjectileId: firstKunai.id,
-        source: 'deflect'
+        targetBossProjectileId: frontMostKunai.id,
+        source: 'boss-intercept'
       });
-      return;  // 只在成功 deflect 時才中斷
+      return;
     }
+
+    flashKey(L, false);
+    return;
   }
-  
-  // 2-2. 若不是 deflect，才去做弱點攻擊
-  const word     = gameState.boss.word;
+
+  // 2-2. 前面沒有 Boss 手裡劍時，才可以依序打 Boss 弱點
+  const word = gameState.boss.word;
   const progress = gameState.bossInputProgress || 0;
+
   if (progress < word.length && L === word[progress]) {
     flashKey(L, true);
-
-    const frontMostSameLetter = typeof window.findFrontMostBossProjectileByLetter === 'function'
-      ? window.findFrontMostBossProjectileByLetter(L)
-      : null;
-
     gameState.playerProjectiles.push({
       x: gameState.player.x + gameState.player.width,
-      y: frontMostSameLetter
-           ? frontMostSameLetter.y + frontMostSameLetter.height/2 - 75
-           : (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
-               ? gameState.boss.y + gameState.boss.hitSlotPositions[progress] - 75
-               : gameState.boss.y + gameState.boss.height/2 - 75,
+      y: (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
+           ? gameState.boss.y + gameState.boss.hitSlotPositions[progress] - 75
+           : gameState.boss.y + gameState.boss.height / 2 - 75,
       width: 150, height: 150, speed: 20,
       weakIndex: progress,
       isAttack: true,
-      canClash: true,
+      canClash: false,
       letter: L,
-      targetBossProjectileId: frontMostSameLetter ? frontMostSameLetter.id : null,
+      targetBossProjectileId: null,
       source: 'boss-attack'
     });
-    gameState.bossInputProgress = progress + 1;
-    return;  // 成功攻擊弱點時中斷
+    return;
   }
-  
+
   flashKey(L, false);
   return;
 }

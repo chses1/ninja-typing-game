@@ -780,86 +780,94 @@ gameState.items.forEach((it, idx) => {
   });
 
   // 2. 玩家飛鏢
-  gameState.playerProjectiles.forEach((p, pi) => {
+  for (let pi = gameState.playerProjectiles.length - 1; pi >= 0; pi--) {
+    const p = gameState.playerProjectiles[pi];
+    if (!p) continue;
+
     p.x += p.speed;
     ctx.drawImage(shurikenImg, p.x, p.y, p.width, p.height);
 
-    // 僅對移動中的飛鏢判定
+    let removed = false;
+
+    // a) 普通標靶
     if (p.speed > 0) {
-      // a) 普通標靶
-      gameState.targets.forEach((t, ti) => {
+      for (let ti = gameState.targets.length - 1; ti >= 0; ti--) {
+        const t = gameState.targets[ti];
         if (collide(p, t)) {
           gameState.playerProjectiles.splice(pi, 1);
           gameState.targets.splice(ti, 1);
-        }
-      });
-        
-      // c) 撞到頭目本體（Boss 前方若還有手裡劍，任何玩家飛鏢都不能直接命中 Boss）
-      if (gameState.bossActive && p.weakIndex !== undefined && collide(p, gameState.boss)) {
-        const blockingProjectile = findFrontMostBossProjectile();
-        if (blockingProjectile) {
-          const hitX = (p.x + p.width * 0.5 + blockingProjectile.x + blockingProjectile.width * 0.5) * 0.5;
-          const hitY = (p.y + p.height * 0.5 + blockingProjectile.y + blockingProjectile.height * 0.5) * 0.5;
-          gameState.playerProjectiles.splice(pi, 1);
-          addProjectileClashEffect(hitX, hitY, 16);
-        } else {
-          const hitX = p.x + p.width * 0.5;
-          const hitY = p.y + p.height * 0.5;
-          gameState.playerProjectiles.splice(pi, 1);
-          gameState.boss.hp--;
-          gameState.boss.hitSlots[p.weakIndex] = true;
-          addBossHitEffect(hitX, hitY);
-          if (gameState.onBossHealthChange) gameState.onBossHealthChange();
-          triggerBossHitFlash();
-          if (gameState.boss.hp <= 0) {
-            gameState.bossActive = false;
-            showLevelOverlay();
-          }
+          removed = true;
+          break;
         }
       }
     }
 
-    // 飛鏢超出畫面就移除
-    if (p.x > canvas.width) {
-      gameState.playerProjectiles.splice(pi, 1);
-    }
-  });
+    if (removed) continue;
 
-  // 2-1. 玩家手裡劍與 Boss 手裡劍互撞
-  // 規則：只有可互撞的 Boss 戰飛鏢才會判定，而且必須「相同字母」才能消除。
-  // 另外會優先鎖定畫面最前面（最靠近玩家、x 最小）的那一顆同字母手裡劍，避免後面的同字母被先吃掉。
-  if (gameState.bossActive && gameState.playerProjectiles.length && gameState.bossProjectiles.length) {
-    for (let pi = gameState.playerProjectiles.length - 1; pi >= 0; pi--) {
-      const p = gameState.playerProjectiles[pi];
-      if (!p || !p.canClash || !p.letter) continue;
-
+    // b) Boss 戰：玩家手裡劍與 Boss 手裡劍互撞，且一發只擊落一顆
+    if (gameState.bossActive && p.canClash && p.letter && gameState.bossProjectiles.length) {
       let targetIndex = -1;
+
       if (p.targetBossProjectileId !== undefined && p.targetBossProjectileId !== null) {
         targetIndex = gameState.bossProjectiles.findIndex((b) => b && b.id === p.targetBossProjectileId);
       }
 
       if (targetIndex === -1) {
         const frontMost = findFrontMostBossProjectileByLetter(p.letter);
-        if (!frontMost) continue;
-        p.targetBossProjectileId = frontMost.id;
-        targetIndex = gameState.bossProjectiles.findIndex((b) => b && b.id === frontMost.id);
+        if (frontMost) {
+          p.targetBossProjectileId = frontMost.id;
+          targetIndex = gameState.bossProjectiles.findIndex((b) => b && b.id === frontMost.id);
+        }
       }
 
-      if (targetIndex === -1) continue;
+      if (targetIndex !== -1) {
+        const b = gameState.bossProjectiles[targetIndex];
+        if (b && String(p.letter).toUpperCase() === String(b.letter).toUpperCase() && collide(p, b)) {
+          const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
+          const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
+          gameState.playerProjectiles.splice(pi, 1);
+          gameState.bossProjectiles.splice(targetIndex, 1);
+          addProjectileClashEffect(hitX, hitY, 14);
+          removed = true;
+        }
+      }
+    }
 
-      const b = gameState.bossProjectiles[targetIndex];
-      if (!b || !b.letter) continue;
+    if (removed) continue;
 
-      if (String(p.letter).toUpperCase() !== String(b.letter).toUpperCase()) continue;
+    // c) 撞到頭目本體
+    if (gameState.bossActive && p.weakIndex !== undefined && collide(p, gameState.boss)) {
+      const blockingProjectile = findFrontMostBossProjectile();
 
-      if (collide(p, b)) {
-        const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
-        const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
-
+      if (blockingProjectile) {
+        const hitX = (p.x + p.width * 0.5 + blockingProjectile.x + blockingProjectile.width * 0.5) * 0.5;
+        const hitY = (p.y + p.height * 0.5 + blockingProjectile.y + blockingProjectile.height * 0.5) * 0.5;
         gameState.playerProjectiles.splice(pi, 1);
-        gameState.bossProjectiles.splice(targetIndex, 1);
-        addProjectileClashEffect(hitX, hitY, 14);
+        addProjectileClashEffect(hitX, hitY, 16);
+        removed = true;
+      } else {
+        const hitX = p.x + p.width * 0.5;
+        const hitY = p.y + p.height * 0.5;
+        gameState.playerProjectiles.splice(pi, 1);
+        gameState.boss.hp--;
+        gameState.boss.hitSlots[p.weakIndex] = true;
+        gameState.bossInputProgress = Math.max(gameState.bossInputProgress || 0, (p.weakIndex || 0) + 1);
+        addBossHitEffect(hitX, hitY);
+        if (gameState.onBossHealthChange) gameState.onBossHealthChange();
+        triggerBossHitFlash();
+        if (gameState.boss.hp <= 0) {
+          gameState.bossActive = false;
+          showLevelOverlay();
+        }
+        removed = true;
       }
+    }
+
+    if (removed) continue;
+
+    // d) 飛鏢超出畫面就移除
+    if (p.x > canvas.width) {
+      gameState.playerProjectiles.splice(pi, 1);
     }
   }
 
@@ -1220,6 +1228,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.threshold = 100;
   gameState.bossHp = 5;
   gameState.bossWord = '';
+  gameState.bossInputProgress = 0;
   gameState.maxCombo = 0;
   gameState.combo = 0;
   gameState.decoyCount = 0;
