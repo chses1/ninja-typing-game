@@ -851,20 +851,20 @@ html, body {
 .level-line {
   width: min(560px, 88vw);
   margin: 0 auto;
-  line-height: 1.35;
+  line-height: 1.18;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 .level-main {
-  font-size: clamp(28px, 5vw, 48px);
+  font-size: clamp(20px, 3.8vw, 34px);
   color: #fff;
 }
 .level-badge {
-  font-size: clamp(24px, 4.4vw, 40px);
+  font-size: clamp(18px, 3.2vw, 28px);
   color: #ffea00;
 }
 .level-sub {
-  font-size: clamp(18px, 3vw, 30px);
+  font-size: clamp(14px, 2.2vw, 22px);
   color: #fff;
 }
 
@@ -1371,12 +1371,12 @@ html, body {
   width: min(720px, 92vw);
   max-height: min(84vh, 760px);
   overflow: hidden;
-  padding: 10px 8px 8px;
-  gap: 10px;
+  padding: 8px 8px 8px;
+  gap: 8px;
 }
 
 #level-overlay .overlay-title {
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 #level-overlay .overlay-box .overlay-btn {
@@ -1391,12 +1391,12 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
   background: linear-gradient(90deg, #ffea00, #ffb300);
   color: #222;
   font-weight: 900;
-  font-size: clamp(16px, 2.2vw, 22px);
+  font-size: clamp(14px, 1.8vw, 18px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.28);
 }
 
@@ -1461,8 +1461,8 @@ html, body {
 }
 
 .stage-summary-title {
-  margin-bottom: 8px;
-  font-size: clamp(17px, 2.1vw, 22px);
+  margin-bottom: 6px;
+  font-size: clamp(15px, 1.9vw, 20px);
   font-weight: 900;
   color: #ffea00;
 }
