@@ -397,6 +397,7 @@ const gameState = {
   bossActive:     false,
   boss:           null,
   bossProjectiles: [],
+  bossProjectileIdCounter: 0,
   threshold:      100,
   bossHp:         5,
   bossWord:       '',
@@ -641,6 +642,22 @@ function collide(a,b) {
   );
 }
 
+function findFrontMostBossProjectileByLetter(letter) {
+  const targetLetter = String(letter || '').toUpperCase();
+  if (!targetLetter || !Array.isArray(gameState.bossProjectiles)) return null;
+
+  let target = null;
+  for (const projectile of gameState.bossProjectiles) {
+    if (!projectile || String(projectile.letter || '').toUpperCase() !== targetLetter) continue;
+    if (!target || projectile.x < target.x) {
+      target = projectile;
+    }
+  }
+  return target;
+}
+
+window.findFrontMostBossProjectileByLetter = findFrontMostBossProjectileByLetter;
+
 // ─── 主繪製迴圈 ───────────────────────────────────
 function gameLoop() {
   if (gameState.paused) {
@@ -776,35 +793,45 @@ gameState.items.forEach((it, idx) => {
 
   // 2-1. 玩家手裡劍與 Boss 手裡劍互撞
   // 規則：只有可互撞的 Boss 戰飛鏢才會判定，而且必須「相同字母」才能消除。
-  // 這樣按 C 只會消掉 C，不會莫名撞掉別顆 T。
+  // 另外會優先鎖定畫面最前面（最靠近玩家、x 最小）的那一顆同字母手裡劍，避免後面的同字母被先吃掉。
   if (gameState.bossActive && gameState.playerProjectiles.length && gameState.bossProjectiles.length) {
     for (let pi = gameState.playerProjectiles.length - 1; pi >= 0; pi--) {
       const p = gameState.playerProjectiles[pi];
       if (!p || !p.canClash || !p.letter) continue;
 
-      for (let bi = gameState.bossProjectiles.length - 1; bi >= 0; bi--) {
-        const b = gameState.bossProjectiles[bi];
-        if (!b || !b.letter) continue;
+      let targetIndex = -1;
+      if (p.targetBossProjectileId !== undefined && p.targetBossProjectileId !== null) {
+        targetIndex = gameState.bossProjectiles.findIndex((b) => b && b.id === p.targetBossProjectileId);
+      }
 
-        // 字母不同時，直接略過，不觸發互撞。
-        if (String(p.letter).toUpperCase() !== String(b.letter).toUpperCase()) continue;
+      if (targetIndex === -1) {
+        const frontMost = findFrontMostBossProjectileByLetter(p.letter);
+        if (!frontMost) continue;
+        p.targetBossProjectileId = frontMost.id;
+        targetIndex = gameState.bossProjectiles.findIndex((b) => b && b.id === frontMost.id);
+      }
 
-        if (collide(p, b)) {
-          const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
-          const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
+      if (targetIndex === -1) continue;
 
-          gameState.playerProjectiles.splice(pi, 1);
-          gameState.bossProjectiles.splice(bi, 1);
-          gameState.projectileClashEffects.push({
-            x: hitX,
-            y: hitY,
-            radius: 14,
-            alpha: 1,
-            life: 14,
-            maxLife: 14
-          });
-          break;
-        }
+      const b = gameState.bossProjectiles[targetIndex];
+      if (!b || !b.letter) continue;
+
+      if (String(p.letter).toUpperCase() !== String(b.letter).toUpperCase()) continue;
+
+      if (collide(p, b)) {
+        const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
+        const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
+
+        gameState.playerProjectiles.splice(pi, 1);
+        gameState.bossProjectiles.splice(targetIndex, 1);
+        gameState.projectileClashEffects.push({
+          x: hitX,
+          y: hitY,
+          radius: 14,
+          alpha: 1,
+          life: 14,
+          maxLife: 14
+        });
       }
     }
   }
@@ -1162,6 +1189,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.bossActive = false;
   gameState.boss = null;
   gameState.bossProjectiles = [];
+  gameState.bossProjectileIdCounter = 0;
   gameState.threshold = 100;
   gameState.bossHp = 5;
   gameState.bossWord = '';

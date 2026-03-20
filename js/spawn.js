@@ -119,6 +119,7 @@ export function spawnLoop(gameState) {
     }
 
     gameState.bossProjectiles.push({
+      id: ++gameState.bossProjectileIdCounter,
       x: gameState.boss.x - size,
       y: chosenY,
       width: size,
@@ -150,6 +151,7 @@ export function spawnLoop(gameState) {
     gameState.practiceEnd = null;
     gameState.targets = [];
     gameState.bossProjectiles = [];
+    gameState.bossProjectileIdCounter = 0;
 
     const pw = gameState.player.width;
     const ph = gameState.player.height;

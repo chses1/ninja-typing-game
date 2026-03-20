@@ -181,6 +181,7 @@ if (gameState.bossActive) {
         isDeflect: true,
         canClash: true,
         letter: L,
+        targetBossProjectileId: firstKunai.id,
         source: 'deflect'
       });
       return;  // 只在成功 deflect 時才中斷
@@ -192,16 +193,24 @@ if (gameState.bossActive) {
   const progress = gameState.bossInputProgress || 0;
   if (progress < word.length && L === word[progress]) {
     flashKey(L, true);
+
+    const frontMostSameLetter = typeof window.findFrontMostBossProjectileByLetter === 'function'
+      ? window.findFrontMostBossProjectileByLetter(L)
+      : null;
+
     gameState.playerProjectiles.push({
       x: gameState.player.x + gameState.player.width,
-      y: (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
-           ? gameState.boss.y + gameState.boss.hitSlotPositions[progress] - 75
-           : gameState.boss.y + gameState.boss.height/2 - 75,
+      y: frontMostSameLetter
+           ? frontMostSameLetter.y + frontMostSameLetter.height/2 - 75
+           : (gameState.boss.hitSlotPositions && gameState.boss.hitSlotPositions[progress] !== undefined)
+               ? gameState.boss.y + gameState.boss.hitSlotPositions[progress] - 75
+               : gameState.boss.y + gameState.boss.height/2 - 75,
       width: 150, height: 150, speed: 20,
       weakIndex: progress,
       isAttack: true,
       canClash: true,
       letter: L,
+      targetBossProjectileId: frontMostSameLetter ? frontMostSameLetter.id : null,
       source: 'boss-attack'
     });
     gameState.bossInputProgress = progress + 1;
