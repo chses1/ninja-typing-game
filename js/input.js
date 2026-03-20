@@ -95,6 +95,12 @@ function stopPauseTips() {
 export function setupInput(gameState) {
   let isUpper = true;
 
+  function hasActiveBossAttackForIndex(index) {
+    return Array.isArray(gameState.playerProjectiles) && gameState.playerProjectiles.some((p) => {
+      return p && p.source === 'boss-attack' && p.weakIndex === index;
+    });
+  }
+
   function flashKey(letter, ok) {
     const btn = document.querySelector(`.vk-key[data-key="${letter.toUpperCase()}"]`);
     if (!btn) return;
@@ -193,6 +199,10 @@ if (gameState.bossActive) {
   const progress = gameState.bossInputProgress || 0;
 
   if (progress < word.length && L === word[progress]) {
+    if (hasActiveBossAttackForIndex(progress)) {
+      return;
+    }
+
     flashKey(L, true);
     gameState.playerProjectiles.push({
       x: gameState.player.x + gameState.player.width,
