@@ -320,6 +320,35 @@ function getStageNextActionLabel(level) {
   return '下一關';
 }
 
+
+function getHeroImageByLevel(level) {
+  if (level <= 10) return 'img/player0.png';
+  if (level <= 20) return 'img/player.png';
+  return 'img/player1.png';
+}
+
+function getNextStageHeroHtml(level) {
+  const nextLevel = Math.min(30, level + 1);
+  const isFinalCheckpoint = level >= 30;
+  const previewLevel = isFinalCheckpoint ? level : nextLevel;
+  const previewLabel = isFinalCheckpoint
+    ? '最終成長形態'
+    : `下一階段角色：第 ${previewLevel} 關造型`;
+
+  return `
+    <div class="stage-hero-preview ${isFinalCheckpoint ? 'final-stage' : ''}">
+      <div class="stage-hero-copy">
+        <div class="stage-hero-label">${isFinalCheckpoint ? '最終破關造型' : '角色即將升級'}</div>
+        <div class="stage-hero-name">${previewLabel}</div>
+        <div class="stage-hero-desc">${isFinalCheckpoint ? '你已完成全部 30 關挑戰！' : '準備用新造型迎接下一個 10 關挑戰。'}</div>
+      </div>
+      <div class="stage-hero-portrait-wrap">
+        <img class="stage-hero-portrait" src="${getHeroImageByLevel(previewLevel)}" alt="${previewLabel}">
+      </div>
+    </div>
+  `;
+}
+
 function updateStageSnapshotForLevel(level) {
   const stageEnd = Math.min(Math.ceil(Math.max(1, level) / 10) * 10, 30);
   gameState.stageSnapshots[stageEnd] = createStageSnapshot();
@@ -341,6 +370,7 @@ function buildStageSummaryHtml(level) {
   const stageAchievements = Math.max(0, gameState.achievementsUnlocked.length - previousSnapshot.achievements);
   const stageBosses = Math.max(0, gameState.bossDefeatedCount - previousSnapshot.bossDefeatedCount);
   return `
+    ${getNextStageHeroHtml(level)}
     <div class="stage-summary-title">第 ${start}～${end} 關階段統計</div>
     <div class="stage-summary-grid">
       <div class="stage-stat-card"><span class="stage-stat-label">階段得分</span><span class="stage-stat-value">${stageScore}</span></div>
