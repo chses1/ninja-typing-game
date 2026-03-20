@@ -656,7 +656,33 @@ function findFrontMostBossProjectileByLetter(letter) {
   return target;
 }
 
+function findFrontMostBossProjectile() {
+  if (!Array.isArray(gameState.bossProjectiles) || !gameState.bossProjectiles.length) return null;
+
+  let target = null;
+  for (const projectile of gameState.bossProjectiles) {
+    if (!projectile) continue;
+    if (!target || projectile.x < target.x) {
+      target = projectile;
+    }
+  }
+  return target;
+}
+
+function addProjectileClashEffect(x, y, radius = 14) {
+  if (!Array.isArray(gameState.projectileClashEffects)) gameState.projectileClashEffects = [];
+  gameState.projectileClashEffects.push({
+    x,
+    y,
+    radius,
+    alpha: 1,
+    life: 14,
+    maxLife: 14
+  });
+}
+
 window.findFrontMostBossProjectileByLetter = findFrontMostBossProjectileByLetter;
+window.findFrontMostBossProjectile = findFrontMostBossProjectile;
 
 // ─── 主繪製迴圈 ───────────────────────────────────
 function gameLoop() {
@@ -768,19 +794,27 @@ gameState.items.forEach((it, idx) => {
         }
       });
         
-      // c) 撞到頭目本體（只有攻擊飛鏢才會傷害 boss）
+      // c) 撞到頭目本體（Boss 前方若還有手裡劍，任何玩家飛鏢都不能直接命中 Boss）
       if (gameState.bossActive && p.weakIndex !== undefined && collide(p, gameState.boss)) {
-        const hitX = p.x + p.width * 0.5;
-        const hitY = p.y + p.height * 0.5;
-        gameState.playerProjectiles.splice(pi, 1);
-        gameState.boss.hp--;
-        gameState.boss.hitSlots[p.weakIndex] = true;
-        addBossHitEffect(hitX, hitY);
-        if (gameState.onBossHealthChange) gameState.onBossHealthChange();
-        triggerBossHitFlash();
-        if (gameState.boss.hp <= 0) {
-          gameState.bossActive = false;
-          showLevelOverlay();
+        const blockingProjectile = findFrontMostBossProjectile();
+        if (blockingProjectile) {
+          const hitX = (p.x + p.width * 0.5 + blockingProjectile.x + blockingProjectile.width * 0.5) * 0.5;
+          const hitY = (p.y + p.height * 0.5 + blockingProjectile.y + blockingProjectile.height * 0.5) * 0.5;
+          gameState.playerProjectiles.splice(pi, 1);
+          addProjectileClashEffect(hitX, hitY, 16);
+        } else {
+          const hitX = p.x + p.width * 0.5;
+          const hitY = p.y + p.height * 0.5;
+          gameState.playerProjectiles.splice(pi, 1);
+          gameState.boss.hp--;
+          gameState.boss.hitSlots[p.weakIndex] = true;
+          addBossHitEffect(hitX, hitY);
+          if (gameState.onBossHealthChange) gameState.onBossHealthChange();
+          triggerBossHitFlash();
+          if (gameState.boss.hp <= 0) {
+            gameState.bossActive = false;
+            showLevelOverlay();
+          }
         }
       }
     }
@@ -824,14 +858,7 @@ gameState.items.forEach((it, idx) => {
 
         gameState.playerProjectiles.splice(pi, 1);
         gameState.bossProjectiles.splice(targetIndex, 1);
-        gameState.projectileClashEffects.push({
-          x: hitX,
-          y: hitY,
-          radius: 14,
-          alpha: 1,
-          life: 14,
-          maxLife: 14
-        });
+        addProjectileClashEffect(hitX, hitY, 14);
       }
     }
   }

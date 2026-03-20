@@ -174,6 +174,16 @@ if (gameState.bossActive) {
       console.log('[Deflect] 已移除手裡劍並推送反彈飛鏢');
       // 立即移除已 deflect 的手裡劍
       gameState.bossProjectiles.splice(0, 1);
+      if (Array.isArray(gameState.projectileClashEffects)) {
+        gameState.projectileClashEffects.push({
+          x: firstKunai.x + firstKunai.width * 0.5,
+          y: firstKunai.y + firstKunai.height * 0.5,
+          radius: 14,
+          alpha: 1,
+          life: 14,
+          maxLife: 14
+        });
+      }
       gameState.playerProjectiles.push({
         x: gameState.player.x + gameState.player.width,
         y: firstKunai.y + firstKunai.height/2 - 75,
