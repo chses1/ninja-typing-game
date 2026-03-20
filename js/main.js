@@ -289,6 +289,71 @@ function getLevelTitle(level) {
   return '終極忍者';
 }
 
+
+function createStageSnapshot() {
+  return {
+    score: gameState?.score || 0,
+    hitCount: gameState?.hitCount || 0,
+    unlockedWords: (gameState?.unlockedWords || []).length,
+    achievements: (gameState?.achievementsUnlocked || []).length,
+    bossDefeatedCount: gameState?.bossDefeatedCount || 0,
+  };
+}
+
+function getStageRangeByLevel(level) {
+  const stageIndex = Math.floor((Math.max(1, level) - 1) / 10);
+  const start = stageIndex * 10 + 1;
+  const end = Math.min(start + 9, 30);
+  return { start, end, index: stageIndex };
+}
+
+function getStageHeroTitle(level) {
+  if (level <= 10) return '學徒晉級';
+  if (level <= 20) return '中忍晉級';
+  return '大師試煉完成';
+}
+
+function getStageNextActionLabel(level) {
+  if (level >= 30) return '結束遊戲';
+  if (level === 10) return '進入第 2 階段';
+  if (level === 20) return '進入第 3 階段';
+  return '下一關';
+}
+
+function updateStageSnapshotForLevel(level) {
+  const stageEnd = Math.min(Math.ceil(Math.max(1, level) / 10) * 10, 30);
+  gameState.stageSnapshots[stageEnd] = createStageSnapshot();
+}
+
+function buildStageSummaryHtml(level) {
+  const { start, end } = getStageRangeByLevel(level);
+  const previousSnapshot = gameState.stageSnapshots[start - 1] || {
+    score: 0,
+    hitCount: 0,
+    unlockedWords: 0,
+    achievements: 0,
+    bossDefeatedCount: 0,
+  };
+
+  const stageScore = Math.max(0, gameState.score - previousSnapshot.score);
+  const stageHits = Math.max(0, gameState.hitCount - previousSnapshot.hitCount);
+  const stageWords = Math.max(0, gameState.unlockedWords.length - previousSnapshot.unlockedWords);
+  const stageAchievements = Math.max(0, gameState.achievementsUnlocked.length - previousSnapshot.achievements);
+  const stageBosses = Math.max(0, gameState.bossDefeatedCount - previousSnapshot.bossDefeatedCount);
+  return `
+    <div class="stage-summary-title">第 ${start}～${end} 關階段統計</div>
+    <div class="stage-summary-grid">
+      <div class="stage-stat-card"><span class="stage-stat-label">階段得分</span><span class="stage-stat-value">${stageScore}</span></div>
+      <div class="stage-stat-card"><span class="stage-stat-label">命中次數</span><span class="stage-stat-value">${stageHits}</span></div>
+      <div class="stage-stat-card"><span class="stage-stat-label">最佳連擊</span><span class="stage-stat-value">${gameState.maxCombo}</span></div>
+      <div class="stage-stat-card"><span class="stage-stat-label">新解鎖單字</span><span class="stage-stat-value">${stageWords}</span></div>
+      <div class="stage-stat-card"><span class="stage-stat-label">新增成就</span><span class="stage-stat-value">${stageAchievements}</span></div>
+      <div class="stage-stat-card"><span class="stage-stat-label">擊敗 Boss</span><span class="stage-stat-value">${stageBosses}</span></div>
+    </div>
+    <div class="stage-summary-footer">目前總分：${gameState.score}｜目前血量：${Math.max(0, gameState.health)}｜已解鎖單字：${gameState.unlockedWords.length}/30</div>
+  `;
+}
+
 function showLeaderboardAfterGameOver() {
   if (gameState.gameOver) return;
 
@@ -428,6 +493,7 @@ const gameState = {
   // ✅ 連續成就用（練習無失誤 / Boss 不掉血）
   consecutiveBossHealthIntactCount: 0,
   consecutiveNoErrorPracticeCount: 0,
+  stageSnapshots: { 0: { score: 0, hitCount: 0, unlockedWords: 0, achievements: 0, bossDefeatedCount: 0 } },
 
 };
 window.gameState = gameState;
@@ -1166,6 +1232,7 @@ export function startGame() {
   initLevel(1);
   gameState.showBossTutorialOnce = showBossTutorialOnce;
   gameState.showItemGainToast = showItemGainToast;
+  gameState.stageSnapshots = { 0: { score: 0, hitCount: 0, unlockedWords: 0, achievements: 0, bossDefeatedCount: 0 } };
   spawnLoop(gameState);
   renderUI(gameState);
   requestAnimationFrame(gameLoop);
@@ -1252,6 +1319,7 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.endConfirmOpen = false;
   gameState.consecutiveBossHealthIntactCount = 0;
   gameState.consecutiveNoErrorPracticeCount = 0;
+  gameState.stageSnapshots = { 0: { score: 0, hitCount: 0, unlockedWords: 0, achievements: 0, bossDefeatedCount: 0 } };
   const oldPracticeTimer = gameState.practiceTimer;
   gameState.practiceTimer = null;
   gameState.practiceEnd = null;
@@ -1346,6 +1414,8 @@ function autoUseHealthIfNeeded() {
 
 
 export function showLevelOverlay() {
+  gameState.bossDefeatedCount += 1;
+
   if (gameState.bossHealthIntact) {
     gameState.consecutiveBossHealthIntactCount += 1;
   } else {
@@ -1360,9 +1430,11 @@ export function showLevelOverlay() {
 
   checkAchievements();
 
-  const ov   = document.getElementById('level-overlay');
-  const txt  = document.getElementById('level-text');
-  const btn  = document.getElementById('level-btn');
+  const ov = document.getElementById('level-overlay');
+  const txt = document.getElementById('level-text');
+  const btn = document.getElementById('level-btn');
+  const badgeEl = document.getElementById('level-clear-badge');
+  const statsEl = document.getElementById('level-clear-stats');
 
   const entry = vocabulary.find(v => v.level === gameState.currentLevel);
   let unlockText = '';
@@ -1378,7 +1450,57 @@ export function showLevelOverlay() {
   if (gameState.score > prev.bestScore) progressParts.push('新高分');
   if (gameState.currentLevel > prev.bestLevel) progressParts.push('新關卡');
   if (gameState.maxCombo > prev.bestCombo) progressParts.push('連擊提升');
-  
+
+  const isStageCheckpoint = gameState.currentLevel % 10 === 0;
+  const isFinalCheckpoint = gameState.currentLevel >= 30;
+  const nextLevel = gameState.currentLevel + 1;
+
+  if (isStageCheckpoint) {
+    updateStageSnapshotForLevel(gameState.currentLevel);
+
+    const { start, end } = getStageRangeByLevel(gameState.currentLevel);
+    const stageTitle = isFinalCheckpoint
+      ? `🏆 完成第 ${start}～${end} 關，全部挑戰結束！`
+      : `🌟 完成第 ${start}～${end} 關，準備升級！`;
+
+    txt.innerHTML = [
+      `<div class="level-line level-main">${stageTitle}</div>`,
+      `<div class="level-line level-badge">${getStageHeroTitle(gameState.currentLevel)}</div>`,
+      unlockText ? `<div class="level-line level-sub">${unlockText}</div>` : '',
+      `<div class="level-line level-sub">${progressParts.length ? `進步：${progressParts.join('、')}` : '這 10 關表現很穩，準備迎接新階段！'}</div>`
+    ].join('');
+
+    if (badgeEl) {
+      badgeEl.style.display = 'block';
+      badgeEl.textContent = isFinalCheckpoint ? '終極破關！' : `角色升級完成！`;
+    }
+    if (statsEl) {
+      statsEl.style.display = 'block';
+      statsEl.innerHTML = buildStageSummaryHtml(gameState.currentLevel);
+    }
+
+    btn.textContent = getStageNextActionLabel(gameState.currentLevel);
+    gameState.overlayReturnTarget = 'level';
+    ov.style.display = 'flex';
+
+    btn.onclick = () => {
+      ov.style.display = 'none';
+      if (isFinalCheckpoint) {
+        showLeaderboardAfterGameOver();
+        return;
+      }
+      gameState.currentLevel = nextLevel;
+      initLevel(nextLevel);
+      gameState.noErrorPractice = true;
+      gameState.bossHealthIntact = false;
+      gameState.bossInputProgress = 0;
+      gameState.spawnPractice();
+    };
+
+    buildProgressMessage();
+    return;
+  }
+
   const lines = [
     `🎉 恭喜通過第 ${gameState.currentLevel} 關！`,
     `稱號：${getLevelTitle(gameState.currentLevel)}`,
@@ -1392,16 +1514,28 @@ export function showLevelOverlay() {
     if (idx === 1) return `<div class="level-line level-badge">${line}</div>`;
     return `<div class="level-line level-sub">${line}</div>`;
   }).join('');
+
+  if (badgeEl) {
+    badgeEl.style.display = 'block';
+    badgeEl.textContent = '勇敢學徒！';
+  }
+  if (statsEl) {
+    statsEl.style.display = 'none';
+    statsEl.innerHTML = '';
+  }
+
+  btn.textContent = '下一關';
   gameState.overlayReturnTarget = 'level';
   ov.style.display = 'flex';
 
   btn.onclick = () => {
-    ov.style.display       = 'none';
-    const nextLevel        = gameState.currentLevel + 1;
+    ov.style.display = 'none';
     gameState.currentLevel = nextLevel;
     initLevel(nextLevel);
+    gameState.noErrorPractice = true;
+    gameState.bossHealthIntact = false;
+    gameState.bossInputProgress = 0;
     gameState.spawnPractice();
-    gameState.bossDefeatedCount++;
   };
 }
 document.getElementById('vocab-btn').onclick = function() {
