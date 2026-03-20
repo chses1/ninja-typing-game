@@ -101,6 +101,12 @@ export function setupInput(gameState) {
     });
   }
 
+  function hasActiveInterceptForTarget(targetId) {
+    return Array.isArray(gameState.playerProjectiles) && gameState.playerProjectiles.some((p) => {
+      return p && p.source === 'boss-intercept' && p.targetBossProjectileId === targetId;
+    });
+  }
+
   function flashKey(letter, ok) {
     const btn = document.querySelector(`.vk-key[data-key="${letter.toUpperCase()}"]`);
     if (!btn) return;
@@ -177,6 +183,10 @@ if (gameState.bossActive) {
   // 2-1. 只要前方還有 Boss 手裡劍，就只能攔截「最前面那一顆」
   if (frontMostKunai) {
     if (L === frontMostKunai.letter) {
+      if (hasActiveInterceptForTarget(frontMostKunai.id)) {
+        return;
+      }
+
       flashKey(L, true);
       gameState.playerProjectiles.push({
         x: gameState.player.x + gameState.player.width,
