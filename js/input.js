@@ -141,7 +141,9 @@ export function setupInput(gameState) {
           gameState.playerProjectiles.push({
             x: gameState.player.x + gameState.player.width,
             y: T.y + T.height/2 - 75,
-            width:150, height:150, speed:20
+            width:150, height:150, speed:20,
+            letter: L,
+            source: 'practice'
           });
           gameState.score += 10;
           if (gameState.onScoreChange) gameState.onScoreChange();
@@ -176,7 +178,10 @@ if (gameState.bossActive) {
         x: gameState.player.x + gameState.player.width,
         y: firstKunai.y + firstKunai.height/2 - 75,
         width: 150, height: 150, speed: 20,
-        isDeflect: true
+        isDeflect: true,
+        canClash: true,
+        letter: L,
+        source: 'deflect'
       });
       return;  // 只在成功 deflect 時才中斷
     }
@@ -194,7 +199,10 @@ if (gameState.bossActive) {
            : gameState.boss.y + gameState.boss.height/2 - 75,
       width: 150, height: 150, speed: 20,
       weakIndex: progress,
-      isAttack: true
+      isAttack: true,
+      canClash: true,
+      letter: L,
+      source: 'boss-attack'
     });
     gameState.bossInputProgress = progress + 1;
     return;  // 成功攻擊弱點時中斷

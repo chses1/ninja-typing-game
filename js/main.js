@@ -774,15 +774,20 @@ gameState.items.forEach((it, idx) => {
     }
   });
 
-  // 2-1. 玩家手裡劍與 Boss 手裡劍互撞（只讓 deflect 飛鏢可攔截，避免 Boss 戰規則被打亂）
+  // 2-1. 玩家手裡劍與 Boss 手裡劍互撞
+  // 規則：只有可互撞的 Boss 戰飛鏢才會判定，而且必須「相同字母」才能消除。
+  // 這樣按 C 只會消掉 C，不會莫名撞掉別顆 T。
   if (gameState.bossActive && gameState.playerProjectiles.length && gameState.bossProjectiles.length) {
     for (let pi = gameState.playerProjectiles.length - 1; pi >= 0; pi--) {
       const p = gameState.playerProjectiles[pi];
-      if (!p || !p.isDeflect) continue;
+      if (!p || !p.canClash || !p.letter) continue;
 
       for (let bi = gameState.bossProjectiles.length - 1; bi >= 0; bi--) {
         const b = gameState.bossProjectiles[bi];
-        if (!b) continue;
+        if (!b || !b.letter) continue;
+
+        // 字母不同時，直接略過，不觸發互撞。
+        if (String(p.letter).toUpperCase() !== String(b.letter).toUpperCase()) continue;
 
         if (collide(p, b)) {
           const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
