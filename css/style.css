@@ -708,6 +708,7 @@ body {
 @media (max-width: 768px) {
   #leaderboard-panel {
     padding: 18px !important;
+    height: min(84vh, 760px) !important;
   }
 
   .leaderboard-tab {
@@ -717,6 +718,11 @@ body {
 
   #leaderboard-subtitle {
     font-size: 15px !important;
+  }
+
+  #leaderboard-actions {
+    padding-top: 12px;
+    margin-top: 12px;
   }
 }
 
@@ -934,6 +940,28 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: 0;
+}
+#leaderboard-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 4px;
+  padding-right: 6px;
+}
+#leaderboard-actions {
+  flex: 0 0 auto;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  background: #222;
+}
+#leaderboard-scroll-area table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #222;
 }
 #leaderboard-panel > h2 {
   width: 100%;

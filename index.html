@@ -200,30 +200,32 @@
             background:rgba(0,0,0,0.85);
             z-index:3600;
             justify-content:center;align-items:center;">
-  <div id="leaderboard-panel" style="background:#222;padding:30px;border-radius:16px;max-height:80vh;overflow:auto;color:#fff;min-width:min(920px,92vw);max-width:92vw;">
+  <div id="leaderboard-panel" style="background:#222;padding:30px;border-radius:16px;color:#fff;min-width:min(920px,92vw);max-width:92vw;width:min(920px,92vw);height:min(80vh,820px);overflow:hidden;">
     <h2 style="text-align:center;margin-bottom:10px;">排行榜</h2>
     <div id="leaderboard-tabs" style="display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
       <button id="leaderboard-tab-all" class="leaderboard-tab active">全部排行榜</button>
       <button id="leaderboard-tab-class" class="leaderboard-tab" style="display:none;">班級排行榜</button>
     </div>
     <div id="leaderboard-subtitle" style="text-align:center;color:#ffd54a;margin-bottom:14px;font-size:18px;">目前顯示：全部排行榜</div>
-    <table style="width:100%;border-collapse:collapse;">
-            <thead>
-        <tr>
-          <th style="padding:8px;border-bottom:1px solid #555;">排名</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">玩家編號</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">最高關卡</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">最高分數</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">圖鑑數量</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">銅/銀/金數</th>
-          <th style="padding:8px;border-bottom:1px solid #555;">總分</th>
-        </tr>
-      </thead>
+    <div id="leaderboard-scroll-area">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding:8px;border-bottom:1px solid #555;">排名</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">玩家編號</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">最高關卡</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">最高分數</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">圖鑑數量</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">銅/銀/金數</th>
+            <th style="padding:8px;border-bottom:1px solid #555;">總分</th>
+          </tr>
+        </thead>
 
-      <tbody id="leaderboard-table-body">
-        <!-- JS 動態插入 -->
-      </tbody>
-    </table>
+        <tbody id="leaderboard-table-body">
+          <!-- JS 動態插入 -->
+        </tbody>
+      </table>
+    </div>
     <div id="leaderboard-actions" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:16px;">
       <button id="leaderboard-restart"
               style="padding:10px 18px;
