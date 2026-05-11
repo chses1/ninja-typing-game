@@ -58,6 +58,12 @@ export function spawnLoop(gameState) {
     return Math.max(950, 3600 - (lv - 1) * 85);
   }
 
+  function getPracticeLetters(level) {
+    if (level <= 10) return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    if (level <= 20) return 'abcdefghijklmnopqrstuvwxyz'.split('');
+    return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  }
+
   function schedulePracticeTimer(durationOverride = null) {
     clearPracticeTimer();
     const duration = durationOverride ?? getPracticeDuration(gameState.currentLevel || 1);
@@ -71,7 +77,7 @@ export function spawnLoop(gameState) {
     gameState.playerProjectiles = [];
 
     const count = 5;
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const letters = getPracticeLetters(gameState.currentLevel || 1);
     const marginLeft = gameState.player.x + gameState.player.width + 20;
     const marginRight = 20;
     const availableW = canvas.width - marginLeft - marginRight;

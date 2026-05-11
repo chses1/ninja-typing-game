@@ -171,6 +171,7 @@
       <button class="vk-key" data-key="L">L</button>
     </div>
     <div class="vk-row">
+      <button class="vk-key shift" data-key="Shift" title="大小寫切換" aria-pressed="true">⇧</button>
       <button class="vk-key" data-key="Z">Z</button>
       <button class="vk-key" data-key="X">X</button>
       <button class="vk-key" data-key="C">C</button>
@@ -296,9 +297,7 @@
   });
 </script>
 
-<script type="module">
-    import { startGame } from './js/main.js';
-
+<script>
     const splash     = document.getElementById('splash-screen');
     const loginOv    = document.getElementById('login-overlay');
     const gameCont   = document.getElementById('game-container');
@@ -306,15 +305,27 @@
     const loginBtn   = document.getElementById('login-btn');
     const playerIdEl = document.getElementById('player-id');
     const errorEl    = document.getElementById('login-error');
+    let startGame = null;
+    let gameModuleError = null;
+
+    import('./js/main.js')
+      .then((mod) => {
+        startGame = mod.startGame;
+      })
+      .catch((err) => {
+        gameModuleError = err;
+        console.error('遊戲模組載入失敗', err);
+      });
 
     // 1. 點擊 Splash → 顯示登入視窗
     splash.addEventListener('click', () => {
-  splash.style.display   = 'none';
-  loginOv.style.display  = 'flex';
+      splash.style.display   = 'none';
+      loginOv.style.display  = 'flex';
+      errorEl.textContent = '';
 
-  // ✅ 自動把游標放到輸入框
-  setTimeout(() => playerIdEl.focus(), 0);
-});
+      // ✅ 自動把游標放到輸入框
+      setTimeout(() => playerIdEl.focus(), 0);
+    });
 
   // 即時過濾：只留數字並且最多 5 位
   playerIdEl.addEventListener('input', () => {
@@ -329,6 +340,12 @@
       errorEl.textContent = '請輸入正好 5 位數字編號';
       return;
     }
+if (!startGame) {
+  errorEl.textContent = gameModuleError
+    ? '遊戲檔案載入失敗，請用本機伺服器開啟，不要直接雙擊 index.html'
+    : '遊戲初始化尚未完成，請稍候再試一次';
+  return;
+}
 if (!window.gameState || !window.gameState.player) {
   errorEl.textContent = '遊戲初始化尚未完成，請重新整理後再試一次';
   return;

@@ -747,12 +747,12 @@ function collide(a,b) {
 }
 
 function findFrontMostBossProjectileByLetter(letter) {
-  const targetLetter = String(letter || '').toUpperCase();
+  const targetLetter = String(letter || '');
   if (!targetLetter || !Array.isArray(gameState.bossProjectiles)) return null;
 
   let target = null;
   for (const projectile of gameState.bossProjectiles) {
-    if (!projectile || String(projectile.letter || '').toUpperCase() !== targetLetter) continue;
+    if (!projectile || String(projectile.letter || '') !== targetLetter) continue;
     if (!target || projectile.x < target.x) {
       target = projectile;
     }
@@ -926,7 +926,7 @@ gameState.items.forEach((it, idx) => {
 
       if (targetIndex !== -1) {
         const b = gameState.bossProjectiles[targetIndex];
-        if (b && String(p.letter).toUpperCase() === String(b.letter).toUpperCase() && collide(p, b)) {
+        if (b && String(p.letter) === String(b.letter) && collide(p, b)) {
           const hitX = (p.x + p.width * 0.5 + b.x + b.width * 0.5) * 0.5;
           const hitY = (p.y + p.height * 0.5 + b.y + b.height * 0.5) * 0.5;
           gameState.playerProjectiles.splice(pi, 1);

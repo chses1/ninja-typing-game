@@ -95,6 +95,20 @@ function stopPauseTips() {
 export function setupInput(gameState) {
   let isUpper = true;
 
+  function updateVirtualKeyboardCase(vk) {
+    vk.querySelectorAll('.vk-key').forEach(b => {
+      const k = b.dataset.key;
+      if (/^[A-Z]$/.test(k)) b.textContent = isUpper ? k : k.toLowerCase();
+    });
+
+    const shiftKey = vk.querySelector('.vk-key[data-key="Shift"]');
+    if (shiftKey) {
+      shiftKey.classList.toggle('is-active', isUpper);
+      shiftKey.setAttribute('aria-pressed', String(isUpper));
+      shiftKey.title = isUpper ? '目前大寫，點一下切換小寫' : '目前小寫，點一下切換大寫';
+    }
+  }
+
   function hasActiveBossAttackForIndex(index) {
     return Array.isArray(gameState.playerProjectiles) && gameState.playerProjectiles.some((p) => {
       return p && p.source === 'boss-attack' && p.weakIndex === index;
@@ -119,8 +133,8 @@ export function setupInput(gameState) {
 
   // 處理所有鍵入
   function handleKey(raw) {
-    const L = raw.toUpperCase();
-    if (!/^[A-Z]$/.test(L)) return;
+    const L = String(raw || '');
+    if (!/^[a-zA-Z]$/.test(L)) return;
         // 一、練習階段：擊中任一尚未 hit 的標靶
     if (!gameState.bossActive) {
       const T = gameState.targets.find(t => !t.hit);
@@ -238,16 +252,14 @@ if (gameState.bossActive) {
   // 虛擬鍵盤
   const vk = document.getElementById('virtual-keyboard');
   if (!vk) return;
+  updateVirtualKeyboardCase(vk);
   vk.addEventListener('click', e => {
     const btn = e.target.closest('.vk-key');
     if (!btn) return;
     const key = btn.dataset.key;
     if (key === 'Shift') {
       isUpper = !isUpper;
-      vk.querySelectorAll('.vk-key').forEach(b => {
-        const k = b.dataset.key;
-        if (/^[A-Z]$/.test(k)) b.textContent = isUpper ? k : k.toLowerCase();
-      });
+      updateVirtualKeyboardCase(vk);
       return;
     }
     if (key === 'Pause') { showPauseMenu(); return; }

@@ -148,7 +148,14 @@ body, html {
 }
 .vk-key.shift,
 .vk-key.backspace {
-  flex: 1.5;
+  flex: 1.2;
+  background: #3f6f8f;
+  font-size: 5vh;
+}
+.vk-key.shift.is-active {
+  background: #ffe600;
+  color: #222;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,0.65);
 }
 .vk-key:active {
   background: #777;
@@ -1577,4 +1584,3 @@ html, body {
     padding: 8px 10px;
   }
 }
-

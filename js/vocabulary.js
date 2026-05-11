@@ -16,29 +16,29 @@ export const vocabulary = [
   { level: 9,  word: 'RUN',  length: 3, category: '校園生活（6-10關）', definition: '跑步',  partOfSpeech: 'v.', example: 'I can run fast.',               exampleZh: '我可以跑得很快。', image: 'img/run.png' },
   { level:10,  word: 'JUMP', length: 4, category: '校園生活（6-10關）', definition: '跳',    partOfSpeech: 'v.', example: 'Can you jump high?',            exampleZh: '你能跳得高嗎？', image: 'img/jump.png' },
 
-  // 11~20 關：不要再用戰鬥名，改成真正單字分類
-  { level:11, word: 'SUN',   length: 3, category: '自然世界（11-15關）', definition: '太陽',   partOfSpeech: 'n.',  example: 'The sun is bright.',           exampleZh: '太陽很明亮。', image: 'img/sun.png' },
-  { level:12, word: 'BIRD',  length: 4, category: '自然世界（11-15關）', definition: '鳥',     partOfSpeech: 'n.',  example: 'The bird can fly.',           exampleZh: '這隻鳥會飛。', image: 'img/bird.png' },
-  { level:13, word: 'BLUE',  length: 4, category: '自然世界（11-15關）', definition: '藍色',   partOfSpeech: 'adj.',example: 'The sky is blue.',            exampleZh: '天空是藍色的。', image: 'img/blue.png' },
-  { level:14, word: 'TREE',  length: 4, category: '自然世界（11-15關）', definition: '樹',     partOfSpeech: 'n.',  example: 'A bird is in the tree.',      exampleZh: '有一隻鳥在樹上。', image: 'img/tree.png' },
-  { level:15, word: 'WATER', length: 5, category: '自然世界（11-15關）', definition: '水',     partOfSpeech: 'n.',  example: 'Drink more water.',          exampleZh: '多喝點水。', image: 'img/water.png' },
+  // 11~20 關：小寫題目
+  { level:11, word: 'sun',   length: 3, category: '自然世界（11-15關）', definition: '太陽',   partOfSpeech: 'n.',  example: 'The sun is bright.',           exampleZh: '太陽很明亮。', image: 'img/sun.png' },
+  { level:12, word: 'bird',  length: 4, category: '自然世界（11-15關）', definition: '鳥',     partOfSpeech: 'n.',  example: 'The bird can fly.',           exampleZh: '這隻鳥會飛。', image: 'img/bird.png' },
+  { level:13, word: 'blue',  length: 4, category: '自然世界（11-15關）', definition: '藍色',   partOfSpeech: 'adj.',example: 'The sky is blue.',            exampleZh: '天空是藍色的。', image: 'img/blue.png' },
+  { level:14, word: 'tree',  length: 4, category: '自然世界（11-15關）', definition: '樹',     partOfSpeech: 'n.',  example: 'A bird is in the tree.',      exampleZh: '有一隻鳥在樹上。', image: 'img/tree.png' },
+  { level:15, word: 'water', length: 5, category: '自然世界（11-15關）', definition: '水',     partOfSpeech: 'n.',  example: 'Drink more water.',          exampleZh: '多喝點水。', image: 'img/water.png' },
 
-  { level:16, word: 'HAND',  length: 4, category: '身體與動作（16-20關）', definition: '手',     partOfSpeech: 'n.',  example: 'Raise your hand.',            exampleZh: '舉起你的手。', image: 'img/hand.png' },
-  { level:17, word: 'MILK',  length: 4, category: '身體與動作（16-20關）', definition: '牛奶',   partOfSpeech: 'n.',  example: 'I drink milk every day.',     exampleZh: '我每天都喝牛奶。', image: 'img/milk.png' },
-  { level:18, word: 'HOME',  length: 4, category: '身體與動作（16-20關）', definition: '家',     partOfSpeech: 'n.',  example: 'Go home now.',                exampleZh: '現在回家吧。', image: 'img/home.png' },
-  { level:19, word: 'WALK',  length: 4, category: '身體與動作（16-20關）', definition: '走路',   partOfSpeech: 'v.',  example: "Let's walk to school.",      exampleZh: '我們走路去學校吧。', image: 'img/walk.png' },
-  { level:20, word: 'SING',  length: 4, category: '身體與動作（16-20關）', definition: '唱歌',   partOfSpeech: 'v.',  example: 'She can sing well.',          exampleZh: '她很會唱歌。', image: 'img/sing.png' },
+  { level:16, word: 'hand',  length: 4, category: '身體與動作（16-20關）', definition: '手',     partOfSpeech: 'n.',  example: 'Raise your hand.',            exampleZh: '舉起你的手。', image: 'img/hand.png' },
+  { level:17, word: 'milk',  length: 4, category: '身體與動作（16-20關）', definition: '牛奶',   partOfSpeech: 'n.',  example: 'I drink milk every day.',     exampleZh: '我每天都喝牛奶。', image: 'img/milk.png' },
+  { level:18, word: 'home',  length: 4, category: '身體與動作（16-20關）', definition: '家',     partOfSpeech: 'n.',  example: 'Go home now.',                exampleZh: '現在回家吧。', image: 'img/home.png' },
+  { level:19, word: 'walk',  length: 4, category: '身體與動作（16-20關）', definition: '走路',   partOfSpeech: 'v.',  example: "Let's walk to school.",      exampleZh: '我們走路去學校吧。', image: 'img/walk.png' },
+  { level:20, word: 'sing',  length: 4, category: '身體與動作（16-20關）', definition: '唱歌',   partOfSpeech: 'v.',  example: 'She can sing well.',          exampleZh: '她很會唱歌。', image: 'img/sing.png' },
 
-  // 21~30 關：維持可理解的分類
-  { level:21, word: 'APPLE',  length: 5, category: '日常生活（21-25關）', definition: '蘋果',   partOfSpeech: 'n.',  example: 'I eat an apple.',            exampleZh: '我吃一顆蘋果。', image: 'img/apple.png' },
-  { level:22, word: 'CHAIR',  length: 5, category: '日常生活（21-25關）', definition: '椅子',   partOfSpeech: 'n.',  example: 'Sit on the chair.',          exampleZh: '坐在椅子上。', image: 'img/chair.png' },
-  { level:23, word: 'SHEEP',  length: 5, category: '日常生活（21-25關）', definition: '綿羊',   partOfSpeech: 'n.',  example: 'A sheep is white.',          exampleZh: '綿羊是白色的。', image: 'img/sheep.png' },
-  { level:24, word: 'BLACK',  length: 5, category: '日常生活（21-25關）', definition: '黑色',   partOfSpeech: 'adj.',example: 'My hair is black.',         exampleZh: '我的頭髮是黑色的。', image: 'img/black.png' },
-  { level:25, word: 'ORANGE', length: 6, category: '日常生活（21-25關）', definition: '柳橙',   partOfSpeech: 'n.',  example: 'Orange juice is tasty.',     exampleZh: '柳橙汁很好喝。', image: 'img/orange.png' },
+  // 21~30 關：大小寫混合題目
+  { level:21, word: 'ApPlE',  length: 5, category: '日常生活（21-25關）', definition: '蘋果',   partOfSpeech: 'n.',  example: 'I eat an apple.',            exampleZh: '我吃一顆蘋果。', image: 'img/apple.png' },
+  { level:22, word: 'ChAiR',  length: 5, category: '日常生活（21-25關）', definition: '椅子',   partOfSpeech: 'n.',  example: 'Sit on the chair.',          exampleZh: '坐在椅子上。', image: 'img/chair.png' },
+  { level:23, word: 'ShEeP',  length: 5, category: '日常生活（21-25關）', definition: '綿羊',   partOfSpeech: 'n.',  example: 'A sheep is white.',          exampleZh: '綿羊是白色的。', image: 'img/sheep.png' },
+  { level:24, word: 'BlAcK',  length: 5, category: '日常生活（21-25關）', definition: '黑色',   partOfSpeech: 'adj.',example: 'My hair is black.',         exampleZh: '我的頭髮是黑色的。', image: 'img/black.png' },
+  { level:25, word: 'OrAnGe', length: 6, category: '日常生活（21-25關）', definition: '柳橙',   partOfSpeech: 'n.',  example: 'Orange juice is tasty.',     exampleZh: '柳橙汁很好喝。', image: 'img/orange.png' },
 
-  { level:26, word: 'SCHOOL', length: 6, category: '進階挑戰（26-30關）', definition: '學校',   partOfSpeech: 'n.',  example: 'We go to school.',           exampleZh: '我們去學校。', image: 'img/school.png' },
-  { level:27, word: 'FRIEND', length: 6, category: '進階挑戰（26-30關）', definition: '朋友',   partOfSpeech: 'n.',  example: 'She is my friend.',          exampleZh: '她是我的朋友。', image: 'img/friend.png' },
-  { level:28, word: 'MONKEY', length: 6, category: '進階挑戰（26-30關）', definition: '猴子',   partOfSpeech: 'n.',  example: 'A monkey climbs trees.',     exampleZh: '猴子會爬樹。', image: 'img/monkey.png' },
-  { level:29, word: 'YELLOW', length: 6, category: '進階挑戰（26-30關）', definition: '黃色',   partOfSpeech: 'adj.',example: 'Bananas are yellow.',       exampleZh: '香蕉是黃色的。', image: 'img/yellow.png' },
-  { level:30, word: 'BOX',    length: 3, category: '進階挑戰（26-30關）', definition: '盒子',   partOfSpeech: 'n.',  example: 'Open the box.',              exampleZh: '打開盒子。', image: 'img/box.png' },
+  { level:26, word: 'ScHoOl', length: 6, category: '進階挑戰（26-30關）', definition: '學校',   partOfSpeech: 'n.',  example: 'We go to school.',           exampleZh: '我們去學校。', image: 'img/school.png' },
+  { level:27, word: 'FrIeNd', length: 6, category: '進階挑戰（26-30關）', definition: '朋友',   partOfSpeech: 'n.',  example: 'She is my friend.',          exampleZh: '她是我的朋友。', image: 'img/friend.png' },
+  { level:28, word: 'MoNkEy', length: 6, category: '進階挑戰（26-30關）', definition: '猴子',   partOfSpeech: 'n.',  example: 'A monkey climbs trees.',     exampleZh: '猴子會爬樹。', image: 'img/monkey.png' },
+  { level:29, word: 'YeLlOw', length: 6, category: '進階挑戰（26-30關）', definition: '黃色',   partOfSpeech: 'adj.',example: 'Bananas are yellow.',       exampleZh: '香蕉是黃色的。', image: 'img/yellow.png' },
+  { level:30, word: 'BoX',    length: 3, category: '進階挑戰（26-30關）', definition: '盒子',   partOfSpeech: 'n.',  example: 'Open the box.',              exampleZh: '打開盒子。', image: 'img/box.png' },
 ];
