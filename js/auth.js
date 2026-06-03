@@ -29,7 +29,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
 
 isSupported()
   .then((supported) => {
@@ -99,7 +98,9 @@ export async function syncGoogleSession(playerId = '') {
 
 export async function signInWithGoogle() {
   try {
-    await signInWithPopup(auth, provider);
+    if (!auth.currentUser) {
+      await signInWithPopup(auth, provider);
+    }
     return syncGoogleSession();
   } catch (error) {
     throw new Error(toErrorMessage(error));
