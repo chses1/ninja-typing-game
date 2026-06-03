@@ -83,8 +83,9 @@
   spellcheck="false"
 />
 
-        <button id="login-btn">開始遊戲</button>
       </div>
+      <button id="login-btn" style="display:none;">開始遊戲</button>
+      <button id="logout-btn" type="button" class="logout-btn" style="display:none;">登出</button>
       <p id="login-error" style="color: red; margin-top: 8px;"></p>
     </div>
   </div>
@@ -314,6 +315,7 @@
     const gameCont   = document.getElementById('game-container');
     const vkBoard    = document.getElementById('virtual-keyboard');
     const loginBtn   = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
     const googleLoginBtn = document.getElementById('google-login-btn');
     const playerIdSection = document.getElementById('player-id-section');
     const googleUserCard = document.getElementById('google-user-card');
@@ -375,8 +377,12 @@
 
     function renderLoginState() {
       const signedIn = Boolean(currentProfile);
+      const isTeacher = currentProfile?.role === 'teacher';
+      const needsStudentId = signedIn && currentProfile.role !== 'teacher' && !currentProfile.playerId;
       googleLoginBtn.style.display = signedIn ? 'none' : 'block';
-      playerIdSection.style.display = signedIn ? 'block' : 'none';
+      loginBtn.style.display = signedIn ? 'block' : 'none';
+      logoutBtn.style.display = signedIn ? 'block' : 'none';
+      playerIdSection.style.display = needsStudentId ? 'block' : 'none';
       googleUserCard.style.display = signedIn ? 'flex' : 'none';
 
       if (signedIn) {
@@ -388,7 +394,11 @@
             ? `玩家編號：${currentProfile.playerId}`
             : '請設定班級座號';
         playerIdEl.value = currentProfile.playerId || playerIdEl.value || '';
-        loginBtn.textContent = currentProfile.playerId ? '開始遊戲' : '儲存並開始遊戲';
+        loginBtn.textContent = isTeacher
+          ? '進入遊戲'
+          : currentProfile.playerId
+            ? `以 ${currentProfile.playerId} 開始遊戲`
+            : '儲存並開始遊戲';
       } else {
         googleUserPhoto.removeAttribute('src');
         googleUserName.textContent = '';
@@ -434,7 +444,9 @@
         currentProgress = data.progress;
       }
       renderLoginState();
-      if (!currentProfile.playerId) setTimeout(() => playerIdEl.focus(), 0);
+      if (currentProfile.role !== 'teacher' && !currentProfile.playerId) {
+        setTimeout(() => playerIdEl.focus(), 0);
+      }
     } catch (err) {
       errorEl.textContent = err.message || 'Google 登入失敗';
     } finally {
@@ -448,9 +460,10 @@
       errorEl.textContent = '請先使用 Google 帳號登入';
       return;
     }
-    const id = playerIdEl.value.trim();
-    // 僅接受 **正好** 5 位數字
-    if (!/^\d{5}$/.test(id)) {
+    const isTeacher = currentProfile.role === 'teacher';
+    const id = currentProfile.playerId || playerIdEl.value.trim();
+    // 學生僅第一次需要填寫 **正好** 5 位數字，之後自動帶入
+    if (!isTeacher && !/^\d{5}$/.test(id)) {
       errorEl.textContent = '請輸入正好 5 位數字編號';
       return;
     }
@@ -467,7 +480,9 @@ if (!window.gameState || !window.gameState.player) {
     loginBtn.disabled = true;
     loginBtn.textContent = '同步進度中...';
     try {
-      currentProfile = await authModule.bindStudentId(id);
+      if (!isTeacher && !currentProfile.playerId) {
+        currentProfile = await authModule.bindStudentId(id);
+      }
       const data = await authModule.fetchMyProgress();
       currentProfile = data.user;
       currentProgress = data.progress;
@@ -478,7 +493,7 @@ if (!window.gameState || !window.gameState.player) {
       return;
     }
     // 1. 設定玩家編號
-    window.gameState.player.id = currentProfile.playerId || id;
+    window.gameState.player.id = currentProfile.playerId || '';
     localStorage.setItem('currentPlayerId', window.gameState.player.id);
     window.__leaderboardPlayerId = window.gameState.player.id;
 
@@ -500,6 +515,29 @@ if (!window.gameState || !window.gameState.player) {
 
     // 3. 啟動遊戲
     startGame();
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    if (!authModule) return;
+    logoutBtn.disabled = true;
+    logoutBtn.textContent = '登出中...';
+    try {
+      await authModule.signOutGoogle();
+      currentProfile = null;
+      currentProgress = null;
+      localStorage.removeItem('currentPlayerId');
+      localStorage.removeItem('unlockedWords');
+      localStorage.removeItem('achievementsUnlocked');
+      window.__leaderboardPlayerId = '';
+      window.__isTeacher = false;
+      errorEl.textContent = '';
+      renderLoginState();
+    } catch (err) {
+      errorEl.textContent = err.message || '登出失敗';
+    } finally {
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = '登出';
+    }
   });
 
   teacherJumpBtn.addEventListener('click', () => {

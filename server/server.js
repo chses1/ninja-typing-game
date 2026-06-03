@@ -216,14 +216,15 @@ function toLeaderboardItem(item, { includePrivate = false } = {}) {
 
 function toUserProfile(item, firebaseUser) {
   const email = item?.email || firebaseUser?.email || '';
+  const role = isTeacherEmail(email) ? 'teacher' : 'student';
   return {
     uid: firebaseUser?.sub || item?.firebaseUid || '',
     email,
     displayName: item?.displayName || firebaseUser?.name || '',
     photoURL: item?.photoURL || firebaseUser?.picture || '',
     playerId: item?.playerId || '',
-    role: isTeacherEmail(email) ? 'teacher' : 'student',
-    needsPlayerId: !item?.playerId
+    role,
+    needsPlayerId: role !== 'teacher' && !item?.playerId
   };
 }
 

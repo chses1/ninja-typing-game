@@ -44,6 +44,9 @@ html, body {
   opacity: 0.65;
   cursor: wait;
 }
+.login-box .logout-btn {
+  background: #777;
+}
 .login-box #login-error {
   color: red;
   font-size: 14px;
