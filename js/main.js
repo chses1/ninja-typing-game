@@ -248,12 +248,14 @@ function ensureEndConfirmOverlay() {
 
   overlay.querySelector('#end-confirm-cancel').onclick = () => {
     overlay.classList.remove('show');
+    overlay.style.display = 'none';
     gameState.endConfirmOpen = false;
     resumeGameFromModal();
   };
 
   overlay.querySelector('#end-confirm-ok').onclick = () => {
     overlay.classList.remove('show');
+    overlay.style.display = 'none';
     gameState.endConfirmOpen = false;
     finalizeEndGame();
   };
@@ -266,6 +268,7 @@ export function openEndConfirm() {
   const overlay = ensureEndConfirmOverlay();
   pauseGameForModal();
   gameState.endConfirmOpen = true;
+  overlay.style.display = 'flex';
   overlay.classList.add('show');
 }
 
