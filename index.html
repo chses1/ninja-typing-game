@@ -56,10 +56,20 @@
      ">
 </div>
 
-  <!-- 原本的登入遮罩 -->
+  <!-- Google 登入遮罩 -->
   <div id="login-overlay">
     <div class="login-box">
-      <h2>請輸入玩家編號</h2>
+      <h2>Google 登入</h2>
+      <div id="google-user-card" class="google-user-card" style="display:none;">
+        <img id="google-user-photo" alt="" />
+        <div>
+          <div id="google-user-name"></div>
+          <div id="google-user-role"></div>
+        </div>
+      </div>
+      <button id="google-login-btn" type="button">使用 Google 帳號登入</button>
+      <div id="player-id-section" style="display:none;">
+        <p class="login-hint">首次登入請輸入班級座號，之後會自動帶入。</p>
       <input
   id="player-id"
   type="text"
@@ -73,7 +83,8 @@
   spellcheck="false"
 />
 
-      <button id="login-btn">登入遊戲</button>
+        <button id="login-btn">開始遊戲</button>
+      </div>
       <p id="login-error" style="color: red; margin-top: 8px;"></p>
     </div>
   </div>
@@ -106,6 +117,11 @@
       <div id="instructions">
         <div>練習中！</div><div>打掉紅色標靶！</div><div>打對就得分！</div>
       </div>
+    </div>
+
+    <div id="teacher-toolbar" style="display:none;">
+      <button id="teacher-jump-btn" type="button">跳關</button>
+      <button id="teacher-admin-btn" type="button">教師後台</button>
     </div>
 
   <!-- 關卡過關 Overlay -->
@@ -280,11 +296,6 @@
 
         if (isAdminHotkey) {
           e.preventDefault();
-          const pw = prompt('請輸入後台管理密碼');
-          if (pw !== '1070') {
-            alert('密碼錯誤');
-            return;
-          }
           window.location.href = './admin.html';
         }
 
@@ -303,28 +314,102 @@
     const gameCont   = document.getElementById('game-container');
     const vkBoard    = document.getElementById('virtual-keyboard');
     const loginBtn   = document.getElementById('login-btn');
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    const playerIdSection = document.getElementById('player-id-section');
+    const googleUserCard = document.getElementById('google-user-card');
+    const googleUserPhoto = document.getElementById('google-user-photo');
+    const googleUserName = document.getElementById('google-user-name');
+    const googleUserRole = document.getElementById('google-user-role');
+    const teacherToolbar = document.getElementById('teacher-toolbar');
+    const teacherJumpBtn = document.getElementById('teacher-jump-btn');
+    const teacherAdminBtn = document.getElementById('teacher-admin-btn');
     const playerIdEl = document.getElementById('player-id');
     const errorEl    = document.getElementById('login-error');
     let startGame = null;
+    let restoreCloudProgress = null;
     let gameModuleError = null;
+    let authModule = null;
+    let currentProfile = null;
+    let currentProgress = null;
 
     import('./js/main.js')
       .then((mod) => {
         startGame = mod.startGame;
+        restoreCloudProgress = mod.restoreCloudProgress;
       })
       .catch((err) => {
         gameModuleError = err;
         console.error('遊戲模組載入失敗', err);
       });
 
+    import('./js/auth.js')
+      .then((mod) => {
+        authModule = mod;
+        mod.onFirebaseUserChanged(async (user) => {
+          if (!user) {
+            currentProfile = null;
+            currentProgress = null;
+            renderLoginState();
+            return;
+          }
+          try {
+            const profile = await mod.syncGoogleSession();
+            currentProfile = profile;
+            if (!profile.needsPlayerId) {
+              const data = await mod.fetchMyProgress();
+              currentProfile = data.user;
+              currentProgress = data.progress;
+              playerIdEl.value = currentProfile.playerId || '';
+            }
+            renderLoginState();
+          } catch (err) {
+            errorEl.textContent = err.message || '登入同步失敗';
+            renderLoginState();
+          }
+        });
+      })
+      .catch((err) => {
+        console.error('Firebase 模組載入失敗', err);
+        errorEl.textContent = 'Google 登入模組載入失敗，請確認網路連線';
+      });
+
+    function renderLoginState() {
+      const signedIn = Boolean(currentProfile);
+      googleLoginBtn.style.display = signedIn ? 'none' : 'block';
+      playerIdSection.style.display = signedIn ? 'block' : 'none';
+      googleUserCard.style.display = signedIn ? 'flex' : 'none';
+
+      if (signedIn) {
+        googleUserPhoto.src = currentProfile.photoURL || './img/player0.png';
+        googleUserName.textContent = currentProfile.displayName || 'Google 使用者';
+        googleUserRole.textContent = currentProfile.role === 'teacher'
+          ? '老師帳號'
+          : currentProfile.playerId
+            ? `玩家編號：${currentProfile.playerId}`
+            : '請設定班級座號';
+        playerIdEl.value = currentProfile.playerId || playerIdEl.value || '';
+        loginBtn.textContent = currentProfile.playerId ? '開始遊戲' : '儲存並開始遊戲';
+      } else {
+        googleUserPhoto.removeAttribute('src');
+        googleUserName.textContent = '';
+        googleUserRole.textContent = '';
+        playerIdEl.value = '';
+      }
+    }
+
+    function setTeacherToolsVisible(isVisible) {
+      window.__isTeacher = Boolean(isVisible);
+      if (teacherToolbar) {
+        teacherToolbar.style.display = isVisible ? 'flex' : 'none';
+      }
+    }
+
     // 1. 點擊 Splash → 顯示登入視窗
     splash.addEventListener('click', () => {
       splash.style.display   = 'none';
       loginOv.style.display  = 'flex';
       errorEl.textContent = '';
-
-      // ✅ 自動把游標放到輸入框
-      setTimeout(() => playerIdEl.focus(), 0);
+      renderLoginState();
     });
 
   // 即時過濾：只留數字並且最多 5 位
@@ -333,7 +418,36 @@
     if (playerIdEl.value !== v) playerIdEl.value = v;
   });
 
-  loginBtn.addEventListener('click', () => {
+  googleLoginBtn.addEventListener('click', async () => {
+    if (!authModule) {
+      errorEl.textContent = 'Google 登入初始化中，請稍候再試';
+      return;
+    }
+    errorEl.textContent = '';
+    googleLoginBtn.disabled = true;
+    googleLoginBtn.textContent = '登入中...';
+    try {
+      currentProfile = await authModule.signInWithGoogle();
+      if (!currentProfile.needsPlayerId) {
+        const data = await authModule.fetchMyProgress();
+        currentProfile = data.user;
+        currentProgress = data.progress;
+      }
+      renderLoginState();
+      if (!currentProfile.playerId) setTimeout(() => playerIdEl.focus(), 0);
+    } catch (err) {
+      errorEl.textContent = err.message || 'Google 登入失敗';
+    } finally {
+      googleLoginBtn.disabled = false;
+      googleLoginBtn.textContent = '使用 Google 帳號登入';
+    }
+  });
+
+  loginBtn.addEventListener('click', async () => {
+    if (!authModule || !currentProfile) {
+      errorEl.textContent = '請先使用 Google 帳號登入';
+      return;
+    }
     const id = playerIdEl.value.trim();
     // 僅接受 **正好** 5 位數字
     if (!/^\d{5}$/.test(id)) {
@@ -350,27 +464,59 @@ if (!window.gameState || !window.gameState.player) {
   errorEl.textContent = '遊戲初始化尚未完成，請重新整理後再試一次';
   return;
 }
+    loginBtn.disabled = true;
+    loginBtn.textContent = '同步進度中...';
+    try {
+      currentProfile = await authModule.bindStudentId(id);
+      const data = await authModule.fetchMyProgress();
+      currentProfile = data.user;
+      currentProgress = data.progress;
+    } catch (err) {
+      errorEl.textContent = err.message || '登入同步失敗';
+      loginBtn.disabled = false;
+      renderLoginState();
+      return;
+    }
     // 1. 設定玩家編號
-    window.gameState.player.id = id;
-    localStorage.setItem('currentPlayerId', id);
-    window.__leaderboardPlayerId = id;
+    window.gameState.player.id = currentProfile.playerId || id;
+    localStorage.setItem('currentPlayerId', window.gameState.player.id);
+    window.__leaderboardPlayerId = window.gameState.player.id;
 
-    // 2. 清空上一位玩家的詞彙圖鑑與成就
-    localStorage.setItem('unlockedWords', JSON.stringify([]));
-    localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
-    window.gameState.unlockedWords       = [];
-    window.gameState.achievementsUnlocked = [];
+    if (typeof restoreCloudProgress === 'function') {
+      restoreCloudProgress(currentProgress);
+    }
 
-    // 3. 隱藏登入、顯示遊戲
+    // 2. 隱藏登入、顯示遊戲
     loginOv.style.display  = 'none';
     gameCont.style.display = 'block';
     vkBoard.style.display  = 'flex';
+    setTeacherToolsVisible(currentProfile.role === 'teacher');
 
     // 讓 canvas 正確調整尺寸
     window.dispatchEvent(new Event('resize'));
 
-    // 4. 啟動遊戲
+    loginBtn.disabled = false;
+    renderLoginState();
+
+    // 3. 啟動遊戲
     startGame();
+  });
+
+  teacherJumpBtn.addEventListener('click', () => {
+    if (!window.__isTeacher) return;
+    const lvl = parseInt(prompt('跳到第幾關？請輸入 1～30'), 10);
+    if (!Number.isInteger(lvl) || lvl < 1 || lvl > 30) {
+      alert('請輸入 1～30 的關卡數字');
+      return;
+    }
+    if (typeof window.jumpToLevel === 'function') {
+      window.jumpToLevel(lvl);
+    }
+  });
+
+  teacherAdminBtn.addEventListener('click', () => {
+    if (!window.__isTeacher) return;
+    window.location.href = './admin.html';
   });
 </script>
 </body>

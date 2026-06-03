@@ -21,7 +21,7 @@ html, body {
   padding: 20px;
   border-radius: 8px;
   text-align: center;
-  width: 280px;
+  width: min(340px, 92vw);
 }
 .login-box input {
   width: 100%;
@@ -37,11 +37,48 @@ html, body {
   color: #fff;
   border: none;
   cursor: pointer;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+.login-box button:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 .login-box #login-error {
   color: red;
   font-size: 14px;
-  height: 18px;
+  min-height: 18px;
+}
+.login-hint {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+.google-user-card {
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: left;
+}
+.google-user-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+#google-user-name {
+  color: #222;
+  font-weight: bold;
+  line-height: 1.25;
+}
+#google-user-role {
+  color: #666;
+  font-size: 13px;
+  margin-top: 2px;
 }
 
 /* 全域盒模型 ───────────────────────────────── */
@@ -71,6 +108,29 @@ body, html {
   position: absolute;
   top: 0; left: 0;
   z-index: 1;  /* 最底層 */
+}
+#teacher-toolbar {
+  position: fixed;
+  right: 12px;
+  bottom: calc(33.333vh + 12px);
+  z-index: 500;
+  gap: 8px;
+  align-items: center;
+}
+#teacher-toolbar button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #ffea00;
+  color: #222;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+#teacher-toolbar button:last-child {
+  background: #2ecc71;
+  color: #fff;
 }
 
 /* 遊戲 UI（左上方狀態列）──────────────────────── */

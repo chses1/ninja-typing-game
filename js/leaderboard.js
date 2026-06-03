@@ -1,7 +1,5 @@
 // js/leaderboard.js
-const API_BASE = location.hostname.includes('github.io')
-  ? 'https://ninja-typing-game.onrender.com'
-  : '';
+import { API_BASE, apiFetch } from './auth.js';
 
 function getClassPrefix(playerId) {
   return String(playerId || '').trim().slice(0, 3);
@@ -180,7 +178,7 @@ export async function submitScore(
     window.__leaderboardPlayerId = normalizedPlayerId;
     localStorage.setItem('currentPlayerId', normalizedPlayerId || '');
 
-    const res = await fetch(`${API_BASE}/leaderboard`, {
+    const res = await apiFetch('/leaderboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -191,7 +189,10 @@ export async function submitScore(
         trophyCount,
         bronzeCount,
         silverCount,
-        goldCount
+        goldCount,
+        bestCombo: window.gameState?.maxCombo || 0,
+        unlockedWords: window.gameState?.unlockedWords || [],
+        achievementsUnlocked: window.gameState?.achievementsUnlocked || []
       })
     });
     const result = await res.json();

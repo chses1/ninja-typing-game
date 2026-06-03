@@ -7,8 +7,10 @@ import { renderUI }      from './ui.js';
 window.initLevel = initLevel;
 window.renderUI  = renderUI;
 window.spawnLoop = spawnLoop;
+window.jumpToLevel = jumpToLevel;
 // 我們暫時只保留 submitScore，上線 API 後再恢復更新排行榜
 import { updateLeaderboard, submitScore } from './leaderboard.js';
+import { apiFetch, signOutGoogle } from './auth.js';
 import { vocabulary }    from './vocabulary.js';
 import { achievements } from './achievements.js';
 /** 
@@ -53,6 +55,82 @@ function savePlayerRecords(next) {
   localStorage.setItem(getPlayerRecordKey('bestLevel'), String(next.bestLevel || 0));
   localStorage.setItem(getPlayerRecordKey('bestCombo'), String(next.bestCombo || 0));
   localStorage.setItem(getPlayerRecordKey('bestVocab'), String(next.bestVocab || 0));
+}
+
+export function restoreCloudProgress(progress = {}) {
+  if (!progress || typeof progress !== 'object') return;
+
+  const unlockedWords = Array.isArray(progress.unlockedWords) ? progress.unlockedWords : [];
+  const achievementsUnlocked = Array.isArray(progress.achievementsUnlocked) ? progress.achievementsUnlocked : [];
+  gameState.unlockedWords = [...new Set(unlockedWords)];
+  gameState.achievementsUnlocked = [...new Set(achievementsUnlocked)];
+  localStorage.setItem('unlockedWords', JSON.stringify(gameState.unlockedWords));
+  localStorage.setItem('achievementsUnlocked', JSON.stringify(gameState.achievementsUnlocked));
+  savePlayerRecords({
+    bestScore: progress.highestScore || 0,
+    bestLevel: progress.highestLevel || 0,
+    bestCombo: progress.bestCombo || 0,
+    bestVocab: progress.vocabCount || gameState.unlockedWords.length
+  });
+}
+
+export function jumpToLevel(level) {
+  const nextLevel = Math.max(1, Math.min(30, Number(level) || 1));
+  if (!window.__isTeacher) return false;
+
+  gameState.currentLevel = nextLevel;
+  gameState.targets = [];
+  gameState.playerProjectiles = [];
+  gameState.bossActive = false;
+  gameState.boss = null;
+  gameState.bossProjectiles = [];
+  gameState.bossProjectileIdCounter = 0;
+  gameState.bossInputProgress = 0;
+  gameState.noErrorPractice = true;
+  gameState.bossHealthIntact = false;
+  gameState.paused = false;
+
+  ['level-overlay', 'pause-overlay', 'vocab-overlay', 'ach-overlay', 'leaderboard-overlay', 'end-confirm-overlay']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.classList.remove('show');
+      }
+    });
+
+  initLevel(nextLevel);
+  renderUI(gameState);
+  if (typeof gameState.destroySpawnLoop === 'function') {
+    gameState.destroySpawnLoop();
+  }
+  spawnLoop(gameState);
+  if (typeof gameState.resumeSpawnSystems === 'function') {
+    gameState.resumeSpawnSystems();
+  }
+  return true;
+}
+
+function saveCurrentProgressToCloud() {
+  if (!gameState.player.id) return Promise.resolve();
+  const { bronzeCount, silverCount, goldCount } = countTrophies(gameState.achievementsUnlocked);
+  return apiFetch('/progress', {
+    method: 'POST',
+    body: JSON.stringify({
+      highestLevel: gameState.currentLevel,
+      highestScore: gameState.score,
+      bestCombo: gameState.maxCombo,
+      vocabCount: gameState.unlockedWords.length,
+      trophyCount: gameState.achievementsUnlocked.length,
+      bronzeCount,
+      silverCount,
+      goldCount,
+      unlockedWords: gameState.unlockedWords,
+      achievementsUnlocked: gameState.achievementsUnlocked
+    })
+  }).catch(err => {
+    console.warn('雲端進度同步失敗：', err);
+  });
 }
 
 function ensureBossTutorialOverlay() {
@@ -705,6 +783,7 @@ export function checkAchievements(onlyIds = null) {
   if (newly.length > 0) {
     localStorage.setItem('achievementsUnlocked', JSON.stringify(unlocked));
     gameState.achievementsUnlocked = unlocked;
+    saveCurrentProgressToCloud();
     showAchQueue(newly);
   }
 }
@@ -1314,8 +1393,10 @@ document.getElementById('ach-close').onclick = () => {
    document.getElementById('ach-detail-modal').style.display = 'none';
  };
 
-function resetGameState({ keepPlayerId = true } = {}) {
+function resetGameState({ keepPlayerId = true, preserveProgress = keepPlayerId } = {}) {
   const currentPlayerId = gameState.player.id;
+  const currentUnlockedWords = preserveProgress ? [...(gameState.unlockedWords || [])] : [];
+  const currentAchievements = preserveProgress ? [...(gameState.achievementsUnlocked || [])] : [];
 
   gameState.currentLevel = 1;
   gameState.health = 100;
@@ -1347,8 +1428,8 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState.bossFlashUntil = 0;
   gameState.playerFlashUntil = 0;
   gameState.overlayReturnTarget = 'pause';
-  gameState.unlockedWords = [];
-  gameState.achievementsUnlocked = [];
+  gameState.unlockedWords = currentUnlockedWords;
+  gameState.achievementsUnlocked = currentAchievements;
   gameState.noErrorPractice = true;
   gameState.gameOver = false;
   gameState.pauseUsed = false;
@@ -1364,8 +1445,8 @@ function resetGameState({ keepPlayerId = true } = {}) {
   gameState._remainingPractice = 0;
   gameState.player.id = keepPlayerId ? currentPlayerId : '';
 
-  localStorage.setItem('unlockedWords', JSON.stringify([]));
-  localStorage.setItem('achievementsUnlocked', JSON.stringify([]));
+  localStorage.setItem('unlockedWords', JSON.stringify(gameState.unlockedWords));
+  localStorage.setItem('achievementsUnlocked', JSON.stringify(gameState.achievementsUnlocked));
 
   if (typeof gameState.destroySpawnLoop === 'function') {
     gameState.destroySpawnLoop();
@@ -1408,9 +1489,11 @@ function returnToLoginScreen() {
   const loginOverlay = document.getElementById('login-overlay');
   const playerIdInput = document.getElementById('player-id');
   const errorEl = document.getElementById('login-error');
+  const teacherToolbar = document.getElementById('teacher-toolbar');
 
   if (gameContainer) gameContainer.style.display = 'none';
   if (loginOverlay) loginOverlay.style.display = 'flex';
+  if (teacherToolbar) teacherToolbar.style.display = 'none';
   if (playerIdInput) {
     playerIdInput.value = '';
     setTimeout(() => playerIdInput.focus(), 0);
@@ -1418,6 +1501,8 @@ function returnToLoginScreen() {
   if (errorEl) errorEl.textContent = '';
   localStorage.removeItem('currentPlayerId');
   window.__leaderboardPlayerId = '';
+  window.__isTeacher = false;
+  signOutGoogle().catch(() => {});
 }
 
 // 排行榜按鈕
@@ -1482,6 +1567,7 @@ export function showLevelOverlay() {
     showUnlockToast(entry);
     unlockText = `新解鎖：${entry.word}（${entry.definition}）`;
   }
+  saveCurrentProgressToCloud();
 
   const progressParts = [];
   const prev = getPlayerRecords();

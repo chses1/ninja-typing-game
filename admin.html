@@ -78,6 +78,34 @@
       margin-top: 12px;
       color: green;
     }
+    .auth-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .auth-panel button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+    .auth-panel button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+    #admin-status {
+      color: #555;
+      line-height: 1.4;
+    }
     .delete-one-btn {
   background: #f39c12;
   color: white;
@@ -94,6 +122,10 @@
 <body>
   <div class="container">
     <h1>排行榜後台管理</h1>
+    <div class="auth-panel">
+      <div id="admin-status">請先使用老師 Google 帳號登入。</div>
+      <button id="admin-google-btn">老師 Google 登入</button>
+    </div>
     <div class="controls">
       <!-- 班級搜尋欄：輸入前 N 碼，點「搜尋」 -->
       <div>
@@ -131,134 +163,155 @@
     <div id="message"></div>
   </div>
 
-  <script>
-    const API_BASE = 'https://ninja-typing-game.onrender.com'; // 若你部署在 Render 或其他域名，請改成對應網址
+  <script type="module">
+    import {
+      apiFetch,
+      onFirebaseUserChanged,
+      signInWithGoogle,
+      syncGoogleSession
+    } from './js/auth.js';
 
-    // 1. 取得並顯示所有排行榜資料
-  async function fetchAndRender(entries) {
-  const tbody = document.getElementById('leaderboard-body');
-  tbody.innerHTML = '';
+    const adminStatus = document.getElementById('admin-status');
+    const adminGoogleBtn = document.getElementById('admin-google-btn');
+    const messageEl = document.getElementById('message');
 
-  // 先把 entries 原始陣列照 totalScore 排序
-  entries.sort((a, b) => b.totalScore - a.totalScore);
+    window.LBData = [];
 
-  entries.forEach((item, idx) => {
-    const tr = document.createElement('tr');
+    function setMessage(text, isError = false) {
+      messageEl.textContent = text;
+      messageEl.style.color = isError ? '#e74c3c' : 'green';
+    }
 
-    tr.innerHTML = `
-      <td>${idx + 1}</td>
-      <td>${item.playerId}</td>
-      <td>${item.highestLevel}</td>
-      <td>${item.highestScore}</td>
-      <td>${item.vocabCount}</td>
-      <td>${item.bronzeCount}/${item.silverCount}/${item.goldCount}</td>
-      <td>${item.totalScore}</td>
-      <td>${new Date(item.updatedAt).toLocaleString()}</td>
-      <td>
-        <button class="delete-one-btn" data-playerid="${item.playerId}">
-          刪除
-        </button>
-      </td>
-    `;
+    function renderTable(entries) {
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
 
-    tbody.appendChild(tr);
-  });
-
-  // 返回遊戲首頁
-document.getElementById('back-btn').addEventListener('click', () => {
-  window.location.href = './index.html';
-});
-
-  // ✅ 統一綁定刪除事件（渲染完再綁）
-  document.querySelectorAll('.delete-one-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const playerId = btn.dataset.playerid;
-
-      if (!confirm(`確定要刪除玩家 ${playerId} 的成績嗎？此操作不可復原！`)) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/leaderboard/${encodeURIComponent(playerId)}`, {
-          method: 'DELETE'
-        });
-
-        if (res.ok) {
-          document.getElementById('message').textContent = `✅ 已刪除玩家 ${playerId} 的成績`;
-
-          // ✅ 重新載入資料，避免搜尋/排序狀態不同步
-          const allData = await loadAll();
-          window.LBData = allData;
-
-          // 若目前有輸入班級，就維持篩選結果
-          const cls = document.getElementById('class-input').value.trim();
-          if (!cls) {
-            fetchAndRender(window.LBData);
-          } else {
-            const filtered = window.LBData.filter(item => item.playerId.startsWith(cls));
-            fetchAndRender(filtered);
-          }
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(`❌ 刪除失敗：${err.error || '請稍後再試'}`);
-        }
-      } catch (e) {
-        console.error(e);
-        alert('❌ 網路或伺服器錯誤，無法刪除');
+      const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore);
+      if (sorted.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9">目前沒有資料</td></tr>';
+        return;
       }
-    });
-  });
-}
 
+      sorted.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        const updatedAt = item.updatedAt || item.lastPlayedAt || item.lastLoginAt;
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${item.playerId || ''}</td>
+          <td>${item.highestLevel || 0}</td>
+          <td>${item.highestScore || 0}</td>
+          <td>${item.vocabCount || 0}</td>
+          <td>${item.bronzeCount || 0}/${item.silverCount || 0}/${item.goldCount || 0}</td>
+          <td>${item.totalScore || 0}</td>
+          <td>${updatedAt ? new Date(updatedAt).toLocaleString() : ''}</td>
+          <td>
+            <button class="delete-one-btn" data-studentid="${item.studentId}" data-playerid="${item.playerId || ''}">
+              刪除
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
 
-    // 2. 從後端取得所有資料
+      document.querySelectorAll('.delete-one-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const studentId = btn.dataset.studentid;
+          const playerId = btn.dataset.playerid;
+          if (!confirm(`確定要刪除玩家 ${playerId} 的成績嗎？此操作不可復原！`)) return;
+
+          try {
+            const res = await apiFetch(`/admin/leaderboard/${encodeURIComponent(studentId)}`, {
+              method: 'DELETE'
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(result.error || '刪除失敗');
+            setMessage(`✅ 已刪除玩家 ${playerId} 的成績`);
+            await reloadAndRender();
+          } catch (err) {
+            alert(`❌ ${err.message || '網路或伺服器錯誤，無法刪除'}`);
+          }
+        });
+      });
+    }
+
     async function loadAll() {
+      const res = await apiFetch('/admin/leaderboard');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '載入排行榜失敗');
+      return Array.isArray(data) ? data : [];
+    }
+
+    function renderCurrentFilter() {
+      const cls = document.getElementById('class-input').value.trim();
+      if (!cls) {
+        renderTable(window.LBData);
+        return;
+      }
+      renderTable(window.LBData.filter(item => String(item.playerId || '').startsWith(cls)));
+    }
+
+    async function reloadAndRender() {
+      window.LBData = await loadAll();
+      renderCurrentFilter();
+    }
+
+    async function enterAdmin() {
       try {
-        const res = await fetch(`${API_BASE}/leaderboard`);
-        const data = await res.json();
-        return data;
+        const profile = await syncGoogleSession();
+        if (profile.role !== 'teacher') {
+          adminStatus.textContent = '此 Google 帳號沒有老師後台權限。';
+          setMessage('❌ 無法進入後台，請使用白名單老師帳號。', true);
+          return;
+        }
+        adminStatus.textContent = `已登入老師後台：${profile.displayName || '老師帳號'}`;
+        setMessage('');
+        await reloadAndRender();
       } catch (err) {
-        console.error('載入排行榜失敗', err);
-        return [];
+        adminStatus.textContent = err.message || '老師登入驗證失敗';
+        setMessage('❌ 老師登入驗證失敗', true);
       }
     }
 
-    // 3. 初始化：一開始載入並 render
-    document.addEventListener('DOMContentLoaded', async () => {
-      const allData = await loadAll();
-      window.LBData = allData; // 暫存在全域，方便後續搜尋使用
-      fetchAndRender(allData);
-    });
-
-    // 4. 「搜尋」功能：根據班級編號（playerId 前綴）過濾
-    document.getElementById('search-btn').addEventListener('click', () => {
-      const cls = document.getElementById('class-input').value.trim();
-      if (!cls) {
-        // 空的話顯示全部
-        fetchAndRender(window.LBData);
-        return;
+    adminGoogleBtn.addEventListener('click', async () => {
+      adminGoogleBtn.disabled = true;
+      adminGoogleBtn.textContent = '登入中...';
+      try {
+        const profile = await signInWithGoogle();
+        if (profile.role !== 'teacher') {
+          adminStatus.textContent = '此 Google 帳號沒有老師後台權限。';
+          setMessage('❌ 無法進入後台，請使用白名單老師帳號。', true);
+          return;
+        }
+        await enterAdmin();
+      } catch (err) {
+        adminStatus.textContent = err.message || '老師登入失敗';
+      } finally {
+        adminGoogleBtn.disabled = false;
+        adminGoogleBtn.textContent = '老師 Google 登入';
       }
-      // 過濾：只顯示 playerId 以 cls 開頭者
-      const filtered = window.LBData.filter(item => item.playerId.startsWith(cls));
-      fetchAndRender(filtered);
     });
 
-    // 5. 「清除所有成績」功能
+    onFirebaseUserChanged((user) => {
+      if (user) enterAdmin();
+    });
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = './index.html';
+    });
+
+    document.getElementById('search-btn').addEventListener('click', renderCurrentFilter);
+
     document.getElementById('clear-btn').addEventListener('click', async () => {
       if (!confirm('確定要清除所有排行榜成績嗎？此操作不可復原！')) return;
       try {
-        const res = await fetch(`${API_BASE}/leaderboard`, {
-          method: 'DELETE'
-        });
-        if (res.ok) {
-          document.getElementById('message').textContent = '✅ 已成功清除所有成績';
-          // 清空列表
-          window.LBData = [];
-          fetchAndRender([]);
-        } else {
-          alert('❌ 清除失敗，請稍後再試');
-        }
+        const res = await apiFetch('/leaderboard', { method: 'DELETE' });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.error || '清除失敗');
+        window.LBData = [];
+        renderTable([]);
+        setMessage('✅ 已成功清除所有成績');
       } catch (err) {
-        console.error('清除失敗', err);
-        alert('❌ 網路或伺服器錯誤，無法清除');
+        alert(`❌ ${err.message || '網路或伺服器錯誤，無法清除'}`);
       }
     });
   </script>

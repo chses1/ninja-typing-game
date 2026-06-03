@@ -286,21 +286,11 @@ if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEdit
   return;
 }
 
-    // Debug 快捷鍵：Ctrl+G 跳關
-    if (e.ctrlKey && e.key.toUpperCase() === 'G') {
+    // 老師快捷鍵：Ctrl+G 跳關
+    if (window.__isTeacher && e.ctrlKey && e.key.toUpperCase() === 'G') {
       const lvl = parseInt(prompt('跳到第幾關？請輸入數字'), 10);
-      if (!isNaN(lvl) && lvl >= 1 && typeof window.initLevel === 'function') {
-        gameState.currentLevel = lvl;
-        window.initLevel(lvl);
-        window.renderUI(gameState);
-        gameState.targets = [];
-        gameState.playerProjectiles = [];
-        if (typeof window.spawnLoop === 'function') {
-          window.spawnLoop(gameState);
-        }
-        if (typeof gameState.resumeSpawnSystems === 'function') {
-          gameState.resumeSpawnSystems();
-        }
+      if (!isNaN(lvl) && lvl >= 1 && typeof window.jumpToLevel === 'function') {
+        window.jumpToLevel(lvl);
       }
       e.preventDefault();
       e.stopImmediatePropagation();
