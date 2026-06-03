@@ -1492,11 +1492,9 @@ function returnToLoginScreen() {
   const loginOverlay = document.getElementById('login-overlay');
   const playerIdInput = document.getElementById('player-id');
   const errorEl = document.getElementById('login-error');
-  const teacherToolbar = document.getElementById('teacher-toolbar');
 
   if (gameContainer) gameContainer.style.display = 'none';
   if (loginOverlay) loginOverlay.style.display = 'flex';
-  if (teacherToolbar) teacherToolbar.style.display = 'none';
   if (playerIdInput) {
     playerIdInput.value = '';
     setTimeout(() => playerIdInput.focus(), 0);

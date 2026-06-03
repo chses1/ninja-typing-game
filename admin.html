@@ -134,7 +134,7 @@
       </div>
       <!-- 右側按鈕群組 -->
 <div class="right-actions">
-  <button id="back-btn">返回遊戲首頁</button>
+  <button id="back-btn">返回遊戲</button>
   <button id="clear-btn">清除所有成績</button>
 </div>
 
@@ -296,6 +296,23 @@
     });
 
     document.getElementById('back-btn').addEventListener('click', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('from') === 'teacher-login') {
+        window.location.href = './index.html?teacher=1';
+        return;
+      }
+
+      if (window.opener && !window.opener.closed) {
+        window.opener.focus();
+        window.close();
+        return;
+      }
+
+      if (document.referrer && new URL(document.referrer).origin === window.location.origin) {
+        history.back();
+        return;
+      }
+
       window.location.href = './index.html';
     });
 

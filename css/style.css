@@ -47,6 +47,17 @@ html, body {
 .login-box .logout-btn {
   background: #777;
 }
+#teacher-login-actions {
+  margin-top: 8px;
+}
+#teacher-login-actions button:nth-child(2) {
+  background: #ffea00;
+  color: #222;
+  font-weight: bold;
+}
+#teacher-login-actions button:nth-child(3) {
+  background: #2ecc71;
+}
 .login-box #login-error {
   color: red;
   font-size: 14px;
@@ -112,30 +123,6 @@ body, html {
   top: 0; left: 0;
   z-index: 1;  /* 最底層 */
 }
-#teacher-toolbar {
-  position: fixed;
-  right: 12px;
-  bottom: calc(33.333vh + 12px);
-  z-index: 500;
-  gap: 8px;
-  align-items: center;
-}
-#teacher-toolbar button {
-  padding: 10px 14px;
-  border: none;
-  border-radius: 6px;
-  background: #ffea00;
-  color: #222;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-}
-#teacher-toolbar button:last-child {
-  background: #2ecc71;
-  color: #fff;
-}
-
 /* 遊戲 UI（左上方狀態列）──────────────────────── */
 #ui {
     position: absolute;
